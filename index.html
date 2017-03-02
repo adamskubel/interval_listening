@@ -1,0 +1,793 @@
+<html>
+<header>
+</header>
+<style type="text/css">
+	div.words {
+		font-size:20;
+		vertical-align: center;
+		color:white;
+		font-family: sans-serif;
+		height:50px;
+		background-color:#666666;
+		margin-top:30px;
+		margin-left:30px;
+		margin-right:30px;
+		width:auto;
+		padding: 5px;
+	}
+
+	.words-nobg {
+		font-size:20;
+		vertical-align: center;
+		color:white;
+		font-family: sans-serif;
+		margin-top:30px;
+		margin-left:30px;
+		margin-right:30px;
+		width:auto;
+	}
+
+	.play {
+		font-size:16;
+		margin-top:30px;
+		vertical-align: center;
+		font-family: sans-serif;
+		margin-left:30px;
+		background-color: #888888;
+		color: white;
+	}
+
+
+	select.config {
+		background-color: #888888;
+		width:200px;
+	}
+
+	input.config {
+		background-color: #888888
+	}
+
+	div.config {
+		margin-top:10px;
+		margin-bottom:10px;
+	}
+
+	.config {
+		color: white;
+		margin-top:5px;
+		margin-bottom:5px;
+		font-size: 14;
+		font-family: sans-serif;
+	}
+
+</style>
+
+<body style="background-color: #222222">
+	<div class="words" id="result">Hello!</div>
+	<div id="buttons">
+		halp
+	</div>
+	<div>			
+		<a  class="words-nobg"  id="score">0/0</a>
+		<input  class="play" id="guessInput" type="text" onkeydown="onTextKey(event)"  />
+		<button class="play" onclick="replayInterval()">Replay</button>	
+	</div>
+	<div style="">
+		<div id="music2" style="float:left">
+			<div id="music">
+			</div>
+			<div>
+				<button class="play" onclick="replayIllustrated()">Play these</button>
+				<button class="play" onclick="illustrateLast()">Show me</button>
+			</div>
+		</div>
+		<div id="controls" class="config">
+			<div class="config">
+				<input type="radio" id="modeSelect" name="modeSelect" value="Train" onclick="updateConfig()">Train</input>
+				<input type="radio" id="modeSelect" name="modeSelect" value="Test" onclick="updateConfig()" checked>Test</input>
+				
+			</div>
+			<div class="config">
+				<div class="config">
+					<label for="setSelect">Test Set</label>
+					<select id="setSelect" class="config">
+						<option value="Simple" selected="true">Simple</option>
+						<option value="Perfect" >Perfect</option>
+						<option value="Easy" >Easy</option>
+						<option value="Major">Major</option>
+						<option value="All">All</option>
+					</select>
+				</div>
+				<div class="config">
+					<div>
+		  				<label for="rangeStart">From:</label>
+						<input class="config" id="rangeStart" type="text" value="C2"/>
+						<label for="rangeEnd">To:</label>
+						<input class="config" id="rangeEnd" type="text" value="C4"/>
+					</div>	
+					<div>	
+						<label for="lockStart">Lock:</label>
+						<input class="config" id="lockStart" type="checkbox" selected="false"/>
+					</div>
+				</div>
+				<div class="config">
+					<label for="intervalDirSelect">Direction</label>
+					<select id="intervalDirSelect" class="config">
+						<option value="up">up</option>
+						<option value="down">down</option>
+						<option value="both">both</option>
+					</select>
+				</div>
+				<div class="config">
+					<label for="playbackModeSelect">Playback Mode</label>
+					<select id="playbackModeSelect" class="config">
+						<option value="both">both</option>
+						<option value="sequence">sequence</option>
+						<option value="chord">chord</option>
+					</select>
+				</div>
+				<div class="config">
+					<button class="play" onclick="updateConfig()">New Test</button>
+				</div>
+			</div>
+		</div>		
+	</div>
+</body>
+
+<script src="node_modules/jquery/dist/jquery.min.js"></script>
+<script src="node_modules/webmidi/webmidi.min.js"></script>
+<script src="https://unpkg.com/vexflow/releases/vexflow-min.js"></script>
+<script type="text/javascript">
+	
+	var keyMap = {};
+
+	var currentTest = {
+		pendingInterval:null,
+		replayCount:0,
+		guessCount:0,
+		getReplayWeight:function(){
+			switch (this.replayCount){
+		 		case 0: 
+		 			return 1.0;
+		 		case 1:
+		 			return 0.75;
+		 		case 2:
+		 			return 0.5;
+		 		default:
+		 			return 0.25;
+			}
+		},
+		getScore:function(){
+			if (this.guessCount == 0)
+				return this.getReplayWeight();
+			if (this.guessCount == 1 && ActiveConfig.testSet.length > 2)
+				return 0.25;
+			return 0;
+		}
+	};
+	
+	var testStats = {
+		total:0,
+		correct:0
+	};
+
+
+	var NoteRange = [notePosition({name:"C",octave:3}),notePosition({name:"C",octave:4})];
+	var MidiOutput;
+	var ActiveConfig = null;
+	var illustratedTones;
+
+	var ToneCutoff = 41;
+
+	function getKey(event){
+		return event.note.name + event.note.octave;
+	}
+
+	function notePosition(note){
+		return noteTone(note);
+	}
+
+	var NoteOrder = [
+		"C",
+		"C#",
+		"D",
+		"D#",
+		"E",
+		"F",
+		"F#",
+		"G",
+		"G#",
+		"A",
+		"A#",
+		"B"
+	];
+
+	var Intervals = [
+		{ quality: "Minor", name: "2nd",  interval: 1 },
+		{ quality: "Major", name: "2nd",  interval: 2 },
+		{ quality: "Minor", name: "3rd",  interval: 3 },
+		{ quality: "Major", name: "3rd",  interval: 4 },
+		{ quality: "Perfect", name: "4th",  interval: 5 },
+		{ quality: "Diminished", name: "5th",  interval: 6 },
+		{ quality: "Perfect", name: "5th",  interval: 7 },
+		{ quality: "Minor", name: "6th",  interval: 8 },
+		{ quality: "Major", name: "6th",  interval: 9 },
+		{ quality: "Minor", name: "7th",  interval: 10 },
+		{ quality: "Major", name: "7th",  interval: 11 },
+		{ quality: "Perfect", name: "8th",  interval: 12 }
+	]
+
+	var IntervalNameMappings = {
+		Diminished:{2:0,3:2,4:4,5:6,6:7,7:9,8:11},
+		Minor:{2:1,3:3,6:8,7:10},
+		Perfect:{4:5,5:7,8:12},
+		Major:{2:2,3:4,6:9,7:11},
+		Augmented:{1:1,2:3,3:5,4:6,5:8,6:10,7:12,8:13}
+	};
+
+	var TestSets = {
+		"Simple" : [3,6],
+		"Perfect" : [4,6],
+		"All" : [0,1,2,3,4,5,6,7,8,9,10,11],
+		"Major" : [1,3,4,6,8,10,11],
+		"Easy" : [3,4,6,11]	
+	}
+
+	var Modes = {Train:"Train",Test:"Test"};
+
+	var ValidNoteRange = [0,127];
+
+	function getIntervalByName(quality,name){
+
+		var numSuffix = function numSuffix(n){
+			if (n == 1) return "st";
+			if (n == 2) return "nd";
+			if (n == 3) return "rd";
+			else return "th";
+		};
+
+		var interval = IntervalNameMappings[quality][name*1];
+
+		if (!interval)
+			throw "hey man " + quality + " " + name + " is not a valid interval!"
+
+		return {quality:quality,name:name+numSuffix(name),interval:interval};
+	}
+
+	function getTestSet(testMode)
+	{
+		var testSet = [];
+		var testSetDef = TestSets[testMode];
+		if (!testSetDef) {
+			throw "no test set with name " + testMode;
+		}
+
+		for (var i=0;i<Intervals.length;i++){
+			
+			for (var j=0;j<testSetDef.length;j++){
+				if (i == testSetDef[j])
+				{
+					testSet.push(Intervals[i]);
+					break;
+				}
+			}
+		}
+		return testSet;
+	}
+
+	function readConfigInput(){
+
+		var radios = document.getElementsByName('modeSelect');
+		var modeSelect = Modes.Test;
+		for (var i = 0, length = radios.length; i < length; i++) {
+		    if (radios[i].checked) {
+		        modeSelect = radios[i].value; 
+		        break;
+		    }
+		}
+
+		return {
+			testSetName: document.getElementById("setSelect").value,
+			modeName: modeSelect,
+			rangeStart: document.getElementById("rangeStart").value,
+			rangeEnd: document.getElementById("rangeEnd").value,
+			rangeLock: document.getElementById("lockStart").checked,
+			intervalDir: document.getElementById("intervalDirSelect").value,
+			playbackModeSelect: document.getElementById("playbackModeSelect").value
+		};
+	}
+
+	function getConfig(){
+
+		var configInput = readConfigInput();
+
+		// console.log(JSON.stringify(configInput));
+
+		var config = {
+			testSet:getTestSet(configInput.testSetName),
+			mode: configInput.modeName,
+			rootRange: [noteTone(configInput.rangeStart),noteTone(configInput.rangeEnd)],
+			intervalDirections: configInput.intervalDir
+		};
+
+		if (configInput.rangeLock == true){
+			config.rootRange[1] = config.rootRange[0];
+		}
+
+
+		// console.log(JSON.stringify(config));
+
+		return config;
+	}
+
+	function updateConfig(){
+
+		ActiveConfig = getConfig();
+
+  		if (ActiveConfig.mode == Modes.Test){
+  			testStats.total = testStats.correct = 0;
+  			showMessage("Test mode");
+	  		runIntervalTraining();
+  		}
+	  	else
+	  		showMessage("Enter an interval to hear!");
+	}
+
+	function makeTestButtons(testSet){
+
+		$("#buttons").empty();
+
+		var count =0;
+		testSet.forEach(function(ts){
+
+			var button = document.createElement("button");
+			 $("#buttons").append(button);
+			 var newId = "guess_" + count++;
+			button.setAttribute("id",newId);
+			button = $("#" + newId);
+			button.addClass("play");
+			button.html(intervalName(ts));
+			button.click(function(){intervalGuess(ts);});
+		});
+	}
+
+	function randomSign(){
+
+		var rand = Math.random();
+		if (rand >= 0.5)
+			return 1;
+		return -1;
+	}
+
+	function generateInterval(noteRange, intervalDirections,intervalSize){
+
+		var note1 = noteRange[0] + Math.floor((Math.random() * (noteRange[1] - noteRange[0])));
+		
+		var interval = intervalSize;
+		if (intervalDirections == "both")
+			interval *= randomSign();
+		else if (intervalDirections == "down")
+			interval *= -1;
+
+		var note2 = note1 + interval;
+
+		if (note2 < ValidNoteRange[0] || note2 > ValidNoteRange[1])
+		 throw "Note " + note2 + " out of range!";
+			// note2 = note1 - interval;
+
+		return [note1,note2];	
+	}
+
+	function noteFromToneNumber(toneNumber){		
+		return NoteOrder[toneNumber%12]+Math.floor(toneNumber/12.0);		
+	}
+
+	function intervalName(interval){
+		return interval.quality + " " + interval.name;
+	}
+
+	function playTones(toneNumbers){
+
+		var playNotes = [];
+		for (var i = 0; i < toneNumbers.length; i++){
+			var noteName = noteFromToneNumber(toneNumbers[i]);			
+			playNotes.push(noteName);
+		}
+		console.log(JSON.stringify(playNotes));
+		console.log(toneNumbers);
+
+		MidiOutput.playNote(30,1,{velocity:0.0,duration:100});
+
+		MidiOutput.playNote(playNotes[0],1,{time: "+500", velocity:0.6,duration:2000});
+		MidiOutput.playNote(playNotes[1],1,{time: "+1500",velocity:0.6,duration:2000});
+		MidiOutput.playNote(playNotes,1,{time: "+2500",velocity:0.6,duration:2000});
+
+		lastTones = toneNumbers;
+	}
+
+
+	function noteTone(note)
+	{
+		var NoteNumber = {
+			"C":0,
+			"C#":1,
+			"D":2,
+			"D#":3,
+			"E":4,
+			"F":5,
+			"F#":6,
+			"G":7,
+			"G#":8,
+			"A":9,
+			"A#":10,
+			"B":11
+		};
+
+		if (typeof note == "string" || note instanceof String){
+
+			var nameMatch = "[A-z]+#*";
+			var name = note.match(nameMatch)[0];
+			if (!name) throw "invalid note name: " + note;
+			var octave = note.match(/\d+/g)[0];
+			if (octave == null) throw "invalid note octave " + note;
+
+			return NoteNumber[name] + (octave*12);
+		}
+		else {
+			if (NoteNumber[note.name] == null) throw {"oh":note.name};
+			return NoteNumber[note.name] + (note.octave*12);
+		}
+	}
+	
+	function printTimestamp(timestamp){
+		var date =  new Date(timestamp);
+		return date.getMinutes() + ":" + date.getSeconds() + ":" + date.getMilliseconds();
+	}
+
+	function chooseInterval(testSet){
+		return testSet[Math.floor(Math.random()*testSet.length)];
+	}
+
+	function runIntervalTraining()
+	{	
+		var config = ActiveConfig;
+
+		var randomInterval = chooseInterval(config.testSet);
+		var toneNumbers = generateInterval(config.rootRange,config.intervalDirections,randomInterval.interval);
+		playTones(toneNumbers);		
+		setTimeout(function(){showMessage("what is the interval?");},7000);
+		makeTestButtons(config.testSet);
+		// lastTones = toneNumbers;
+		currentTest.pendingInterval = randomInterval;
+		currentTest.replayCount = 0;
+		currentTest.guessCount = 0;
+	}
+
+	function playInterval(interval)
+	{
+		var config = ActiveConfig;
+		showMessage("Playing a " + intervalName(interval));
+		var toneNumbers = generateInterval(config.rootRange,config.intervalDirections,interval.interval);
+		// console.log(JSON.stringify(toneNumbers));
+		playTones(toneNumbers);
+		drawToneNumbers(toneNumbers);
+	}
+
+	function scoreTest(test){
+		testStats.correct += test.getScore();
+		testStats.total++;
+		document.getElementById("score").innerHTML = "Score: " + testStats.correct + "/" + testStats.total;
+		// document.getElementById("counts").innerHTML = "Counts: " + testStats.correct + "/" + testStats.total;
+	}
+
+	function intervalEntered(interval){
+
+		ActiveConfig = getConfig();
+
+		if (ActiveConfig.mode == Modes.Train){
+			playInterval(interval);
+		}
+		else if (ActiveConfig.mode == Modes.Test) {
+			intervalGuess(interval);
+		}
+		else {
+			throw "Invalid mode " + ActiveConfig.mode;
+		}
+	}
+
+
+	function intervalGuess(guessedInterval)
+	{
+		if (currentTest.pendingInterval == null) {
+			runIntervalTraining();
+			return;
+		}
+			
+		if (guessedInterval.interval == currentTest.pendingInterval.interval)
+		{
+			showMessage("Correct, it was " + intervalName(guessedInterval));
+			drawToneNumbers(lastTones);	
+			scoreTest(currentTest);
+			runIntervalTraining();
+		} else {
+			showMessage("sorry, not a " + intervalName(guessedInterval) + ". That sounds like this!");//- try again :)");
+			currentTest.guessCount++;
+			currentTest.replayCount++;
+			// playTones(lastTones);
+			var testTones = lastTones;
+			var guessedTones = generateInterval([lastTones[0],lastTones[0]],ActiveConfig.intervalDirections,guessedInterval.interval);
+			playTones(guessedTones);
+			lastTones = testTones;
+		}	
+	}
+
+
+	function showMessage(text){
+		document.getElementById("result").innerHTML = text;
+	}
+
+	function init(){
+
+  		initVF();
+  		drawToneNumbers([noteTone({name:"C#",octave:4}),noteTone({name:"G",octave:4})]);
+
+  		updateConfig();
+	}
+
+
+	WebMidi.enable(function(err){
+
+		if (WebMidi.outputs.length <= 0) {
+			console.log("Need outputs man");
+			return;
+		}
+
+		MidiOutput = WebMidi.outputs[0];
+		console.log(JSON.stringify(WebMidi.outputs));
+
+		init();
+	});
+
+	function getKeyInterval(keycode){
+		switch (keycode){
+			case 0x41:
+				return '1';
+			case 0x53:
+				return '2';
+			case 0x44:
+				return '3';
+			case 0x46:
+				return '4';
+			case 0x47:
+				return '5';
+			case 0x48:
+				return '6';
+			case 0x4A:
+				return '7';
+			case 0x4B:
+				return '8';
+			case 0x4C:
+				return '9';
+			default:
+				return null;
+			}
+	}
+
+	function enableKeyMode(){
+
+		var noteKeyDown = function keyDownTextField(e) {
+			if (keyMap[e.keyCode]) return;
+			keyMap[e.keyCode] = true;	
+			var guess = getKeyInterval(e.keyCode);
+			if (guess != null)
+				intervalEntered(guess);	  				  
+		};
+		
+		var noteKeyUp = function keyDownTextField(e) {
+			keyMap[e.keyCode] = false;
+		};
+
+		// document.addEventListener("keydown", noteKeyDown, false);
+		// document.addEventListener("keyup", noteKeyUp, false);
+	};
+
+	function replayInterval(){
+		if (lastTones)
+		{
+			playTones(lastTones);
+			currentTest.replayCount++;
+		}
+	}
+
+	function replayIllustrated(){
+		if (illustratedTones){
+			playTones(illustratedTones);
+			pendingInterval = null;
+		}
+	}
+	
+	function illustrateLast(){
+		if (lastTones)
+			drawToneNumbers(lastTones);
+	}
+	
+	function onTextKey(event)
+	{
+		if (event.keyCode == 13)
+		{
+			var textPattern = "[A-z]+";
+
+			var inputString = document.getElementById("guessInput").value.toLowerCase();
+
+			if (inputString.startsWith("r") ){
+				replayInterval();
+			}
+			
+
+			var guessString  = inputString.match(textPattern);
+
+			var quality;
+			if (guessString == ("major") || guessString == ("maj")){
+				quality = "Major";
+			}
+			else if (guessString == ("minor") || guessString == ("min")){
+				quality = "Minor";
+			}
+			else if (guessString == ("diminished") || guessString == ("dim") || guessString == "d"){
+				quality = "Diminished";
+			} 
+			else if (guessString == "aug" || guessString == "a" || guessString == "augmented")
+				quality = "Augmented";
+			else if (guessString == ("perfect") || guessString == ("per") || guessString == "p"){
+				quality = "Perfect";
+			} 
+			else {
+				console.log("Invalid quality: " + quality);
+				return;
+			}
+
+			var numberPattern = /\d+/g;
+			var intervalName = inputString.match(numberPattern);
+
+			if (intervalName <= 0) {
+				console.log("Invalid interval name: " + intervalName);				
+				return;
+			}
+
+			var interval = getIntervalByName(quality,intervalName);
+			if (!interval)
+				console.log("Couldn't resolve interval " + quality + "," + intervalName);
+			else
+				intervalEntered(interval);
+		}
+	}
+
+
+	var VF;
+	var vfContext;
+	var staveTreble,staveBass;
+
+	function initVF(){
+		VF = Vex.Flow;
+
+		// Create an SVG renderer and attach it to the DIV element named "boo".
+		var div = document.getElementById("music")
+		var renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
+
+		// Configure the rendering context.
+		renderer.resize(500, 500);
+		var context = renderer.getContext();
+		context.setFont("Arial", 10, "").setBackgroundFillStyle("#eed");
+		context.setStrokeStyle("#AAAAAA");
+		context.setFillStyle("#AAAAAA");
+
+		// Create a stave of width 400 at position 10, 40 on the canvas.
+		staveTreble = new VF.Stave(10, 40, 400);
+		staveBass = new VF.Stave(10, 140, 400);
+
+		// Add a clef and time signature.
+		staveTreble.addClef("treble");
+		staveBass.addClef("bass");
+		// Connect it to the rendering context and draw!
+
+		staveTreble.setContext(context).draw();
+		staveBass.setContext(context).draw();
+		vfContext = context;
+	}
+
+	function getVFName(toneNumber){
+		return NoteOrder[toneNumber%12] + "/" + (Math.floor(toneNumber/12)+1);
+	}
+
+
+	function makeStaveNote(toneNumber,duration)
+	{
+		var clef = (toneNumber < ToneCutoff) ? "bass" : "treble";
+		var note = new VF.StaveNote({ clef:clef,keys: [getVFName(toneNumber)], duration: duration });
+
+		if (NoteOrder[toneNumber%12].endsWith("#"))
+			note.addAccidental(0,new VF.Accidental("#"));
+
+		return note;
+	}
+
+	function makeGhostNote(toneNumber,duration)
+	{
+		var clef = (toneNumber < ToneCutoff) ? "bass" : "treble";
+		return new VF.GhostNote({clef:clef,keys: [getVFName(toneNumber)], duration: duration })
+	}
+
+	function makeChord(toneNumbers,duration){
+
+		if (toneNumbers == null || toneNumbers.length == 0)
+			return makeGhostNote(0,duration);
+
+		var keys = [];
+		toneNumbers.forEach(function(t){keys.push(getVFName(t));});
+
+		var clef = (toneNumbers[0] < ToneCutoff) ? "bass" : "treble";
+		return new VF.StaveNote({clef: clef, keys:keys,duration: duration});
+	}
+
+	function drawToneNumbers(notes){
+
+		illustratedTones = notes;
+		var chord = [[],[]];
+
+		notes.forEach(function(n){(n < ToneCutoff) ? chord[0].push(n) : chord[1].push(n);})
+
+		var vfNotes = [[],[]];
+
+		notes.forEach(function(n){
+			var active = (n < ToneCutoff) ? 0 : 1;
+			vfNotes[active].push(makeStaveNote(n,"q"));
+			vfNotes[1-active].push(makeGhostNote(n,"q"));
+		});
+
+		for (var i=0;i<chord.length;i++){
+			vfNotes[i].push(makeChord(chord[i],"h"));
+		}
+
+		drawNotes(vfNotes[0],vfNotes[1]);
+	}
+
+	function drawNotes(bassNotes,trebleNotes){
+
+
+		// Create a voice in 4/4 and add above notes
+		var trebleVoice = new VF.Voice({num_beats: 4,  beat_value: 4}).addTickables(trebleNotes).setStave(staveTreble);
+		var bassVoice = new VF.Voice({num_beats: 4,  beat_value: 4}).addTickables(bassNotes).setStave(staveBass);
+	
+		var startX = Math.max(staveTreble.getNoteStartX(), staveBass.getNoteStartX());
+		staveTreble.setNoteStartX(startX);
+		staveBass.setNoteStartX(startX);
+
+		var formatter = new VF.Formatter();
+
+		formatter.joinVoices([trebleVoice]);
+		formatter.joinVoices([bassVoice]);
+		formatter.format([trebleVoice, bassVoice], 400);
+
+		// Render voices
+		vfContext.clear();
+		staveTreble.setContext(vfContext).draw();
+		staveBass.setContext(vfContext).draw();
+		trebleVoice.draw(vfContext, staveTreble); 
+		bassVoice.draw(vfContext, staveBass); 
+	}
+	
+
+
+</script>
+</html>
+
+
+
+
+
+
+
+
+
+
+
