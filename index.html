@@ -27,12 +27,25 @@
 		width:auto;
 	}
 
+	.test-scores {
+		font-size:16;
+		vertical-align: center;
+		color:white;
+		font-family: sans-serif;
+		margin-top:15px;
+		margin-left:15px;
+		margin-right:15px;
+		margin-bottom:15px;
+	}
+
 	.play {
 		font-size:16;
-		margin-top:30px;
+		margin-top:15px;
+		margin-bottom:15px;
 		vertical-align: center;
 		font-family: sans-serif;
-		margin-left:30px;
+		margin-left:15px;
+		margin-right:15px;
 		background-color: #888888;
 		color: white;
 	}
@@ -50,6 +63,8 @@
 	div.config {
 		margin-top:10px;
 		margin-bottom:10px;
+		margin-left:10px;
+		margin-right:10px;
 	}
 
 	.config {
@@ -61,7 +76,13 @@
 	}
 
 </style>
+<head>
+<!-- Load the Realtime JavaScript library -->
+    <script src="https://apis.google.com/js/api.js"></script>
 
+    <!-- Load the utility library -->
+    <script src="https://www.gstatic.com/realtime/realtime-client-utils.js"></script>
+</head>
 <body style="background-color: #222222">
 	<div class="words" id="result">Hello!</div>
 	<div id="buttons">
@@ -81,7 +102,7 @@
 				<button class="play" onclick="illustrateLast()">Show me</button>
 			</div>
 		</div>
-		<div id="controls" class="config">
+		<div id="controls" class="config" style="float:left">
 			<div class="config">
 				<input type="radio" id="modeSelect" name="modeSelect" value="Train" onclick="updateConfig()">Train</input>
 				<input type="radio" id="modeSelect" name="modeSelect" value="Test" onclick="updateConfig()" checked>Test</input>
@@ -128,9 +149,16 @@
 				</div>
 				<div class="config">
 					<button class="play" onclick="updateConfig()">New Test</button>
+					<button class="play" style="display:none" id="authorize-button">Authorize</button>
+					<!-- <button class="play" id="signout-button">Sign out</button> -->
 				</div>
 			</div>
-		</div>		
+		</div>			
+		<div class="config" style="float:left;background-color: #444444" >
+			<button class="play" onclick="clearHistory()">Clear History</button>
+			<div id="testResults" >
+			</div>
+		</div>	
 	</div>
 </body>
 
@@ -140,6 +168,7 @@
 <script type="text/javascript">
 	
 	var keyMap = {};
+	var resultList;
 
 	var currentTest = {
 		pendingInterval:null,
@@ -393,8 +422,7 @@
 			var noteName = noteFromToneNumber(toneNumbers[i]);			
 			playNotes.push(noteName);
 		}
-		console.log(JSON.stringify(playNotes));
-		console.log(toneNumbers);
+		console.log("Playing :" + JSON.stringify(playNotes));
 
 		MidiOutput.playNote(30,1,{velocity:0.0,duration:100});
 
@@ -444,8 +472,16 @@
 		return date.getMinutes() + ":" + date.getSeconds() + ":" + date.getMilliseconds();
 	}
 
+	var randomCheck = {};
+
 	function chooseInterval(testSet){
-		return testSet[Math.floor(Math.random()*testSet.length)];
+		var index = Math.floor(Math.random()*testSet.length);
+
+		if (randomCheck["count_" + index]) randomCheck["count_" + index]++;
+		else randomCheck["count_" + index] = 1;
+		console.log(JSON.stringify(randomCheck));
+
+		return testSet[index];
 	}
 
 	function runIntervalTraining()
@@ -458,6 +494,7 @@
 		setTimeout(function(){showMessage("what is the interval?");},7000);
 		makeTestButtons(config.testSet);
 		// lastTones = toneNumbers;
+
 		currentTest.pendingInterval = randomInterval;
 		currentTest.replayCount = 0;
 		currentTest.guessCount = 0;
@@ -477,7 +514,16 @@
 		testStats.correct += test.getScore();
 		testStats.total++;
 		document.getElementById("score").innerHTML = "Score: " + testStats.correct + "/" + testStats.total;
-		// document.getElementById("counts").innerHTML = "Counts: " + testStats.correct + "/" + testStats.total;
+
+		resultList.set(resultList.length-1,testStats);
+		updateResultList();
+
+		if (testStats.total >= 15){
+			if (resultList) {
+				resultList.push({correct:0,total:0});
+			}
+			updateConfig();
+		}
 	}
 
 	function intervalEntered(interval){
@@ -534,6 +580,35 @@
   		updateConfig();
 	}
 
+	function clearHistory(){
+		resultList.clear();
+	}
+
+	function setResultList(_resultList){
+		resultList = _resultList;
+		if (resultList.length == 0)
+			resultList.push({correct:0,total:0});
+		updateResultList();
+	}
+
+	function updateResultList()
+	{
+		var resultDiv = $("#testResults");
+		resultDiv.empty();
+		var count = 0;
+		for (var i=0;i<resultList.length;i++){
+			var result = resultList.get(i);
+
+			var text = document.createElement("div");
+
+			var newId = "score_" + count++;
+			text.setAttribute("id",newId);
+			text.setAttribute("class","test-scores");
+			resultDiv.append(text);
+
+			text.innerHTML = result.correct + "/" + result.total;
+		}
+	}
 
 	WebMidi.enable(function(err){
 
@@ -547,49 +622,6 @@
 
 		init();
 	});
-
-	function getKeyInterval(keycode){
-		switch (keycode){
-			case 0x41:
-				return '1';
-			case 0x53:
-				return '2';
-			case 0x44:
-				return '3';
-			case 0x46:
-				return '4';
-			case 0x47:
-				return '5';
-			case 0x48:
-				return '6';
-			case 0x4A:
-				return '7';
-			case 0x4B:
-				return '8';
-			case 0x4C:
-				return '9';
-			default:
-				return null;
-			}
-	}
-
-	function enableKeyMode(){
-
-		var noteKeyDown = function keyDownTextField(e) {
-			if (keyMap[e.keyCode]) return;
-			keyMap[e.keyCode] = true;	
-			var guess = getKeyInterval(e.keyCode);
-			if (guess != null)
-				intervalEntered(guess);	  				  
-		};
-		
-		var noteKeyUp = function keyDownTextField(e) {
-			keyMap[e.keyCode] = false;
-		};
-
-		// document.addEventListener("keydown", noteKeyDown, false);
-		// document.addEventListener("keyup", noteKeyUp, false);
-	};
 
 	function replayInterval(){
 		if (lastTones)
@@ -779,6 +811,71 @@
 
 
 </script>
+ <script type="text/javascript">
+      // Client ID and API key from the Developer Console
+      var clientId = '643761622582-s5a2tbc11l64d7sshuuaktr8ercu8ulc.apps.googleusercontent.com';
+      var SCOPES = "https://www.googleapis.com/auth/drive";
+
+      var authorizeButton = document.getElementById('authorize-button');
+      var signoutButton = document.getElementById('signout-button');
+
+ 	var realtimeUtils = new utils.RealtimeUtils({ clientId: clientId });
+
+      authorize();
+
+      function authorize() {
+        // Attempt to authorize
+        realtimeUtils.authorize(function(response){
+          if(response.error){
+            // Authorization failed because this is the first time the user has used your application,
+            // show the authorize button to prompt them to authorize manually.
+            $('#authorize-button').show();
+            button.classList.add('visible');
+            button.addEventListener('click', function () {
+              realtimeUtils.authorize(function(response){
+                start();
+              }, true);
+            });
+          } else {
+              start();
+          }
+        }, false);
+      }
+
+      function start() {
+        // With auth taken care of, load a file, or create one if there
+        // is not an id in the URL.
+        var id = "0B6eNzoTXZGgIc3VBNWtHemtaM1k";//realtimeUtils.getParam('id');
+        if (id) {
+          // Load the document id from the URL
+          realtimeUtils.load(id.replace('/', ''), onFileLoaded, onFileInitialize);
+        } else {
+          // Create a new document, add it to the URL
+          realtimeUtils.createRealtimeFile('New Quickstart File', function(createResponse) {
+            window.history.pushState(null, null, '?id=' + createResponse.id);
+            realtimeUtils.load(createResponse.id, onFileLoaded, onFileInitialize);
+          });
+        }
+      }
+
+      // The first time a file is opened, it must be initialized with the
+      // document structure. This function will add a collaborative string
+      // to our model at the root.
+      function onFileInitialize(model) {
+        var list = model.createList();
+        model.getRoot().set('test_results',list);
+      }
+
+      // After a file has been initialized and loaded, we can access the
+      // document. We will wire up the data model to the UI.
+      function onFileLoaded(doc) {
+        var resultList = doc.getModel().getRoot().get('test_results');
+        setResultList(resultList);
+      }
+
+      
+
+	</script>	
 </html>
 
 
