@@ -28,7 +28,7 @@
 	}
 
 	.test-scores {
-		font-size:16;
+		font-size:12;
 		vertical-align: center;
 		color:white;
 		font-family: sans-serif;
@@ -36,6 +36,12 @@
 		margin-left:15px;
 		margin-right:15px;
 		margin-bottom:15px;
+	}
+
+	.clearfix::after {
+	    content: "";
+	    clear: both;
+	    display: table;
 	}
 
 	.play {
@@ -104,8 +110,8 @@
 		</div>
 		<div id="controls" class="config" style="float:left">
 			<div class="config">
-				<input type="radio" id="modeSelect" name="modeSelect" value="Train" onclick="updateConfig()">Train</input>
-				<input type="radio" id="modeSelect" name="modeSelect" value="Test" onclick="updateConfig()" checked>Test</input>
+				<input type="radio" id="modeSelect" name="modeSelect" value="Train" onclick="configChanged()">Train</input>
+				<input type="radio" id="modeSelect" name="modeSelect" value="Test" onclick="configChanged()" checked>Test</input>
 				
 			</div>
 			<div class="config">
@@ -148,9 +154,13 @@
 					</select>
 				</div>
 				<div class="config">
-					<button class="play" onclick="updateConfig()">New Test</button>
+					<label for="testSizeInput">Test size:</label>			
+					<input class="config" id="testSizeInput" type="text" value="15"></input>
+				</div>
+				<div class="config">
+					<button class="play" onclick="startNewTest()">New Test</button>
+					<button class="play" onclick="finishCurrentTest()">Save Test</button>
 					<button class="play" style="display:none" id="authorize-button">Authorize</button>
-					<!-- <button class="play" id="signout-button">Sign out</button> -->
 				</div>
 			</div>
 		</div>			
@@ -159,6 +169,10 @@
 			<div id="testResults" >
 			</div>
 		</div>	
+		<div style="width: 1000px; height: 500px; display:table"></div>
+			<div id="series_chart_div" style="width: 500px; height: 500px; float:left;"></div>
+			<div id="toneChartDiv" style="width: 500px; height: 500px; float:left;"></div>
+		</div>
 	</div>
 </body>
 
@@ -174,30 +188,13 @@
 		pendingInterval:null,
 		replayCount:0,
 		guessCount:0,
-		getReplayWeight:function(){
-			switch (this.replayCount){
-		 		case 0: 
-		 			return 1.0;
-		 		case 1:
-		 			return 0.75;
-		 		case 2:
-		 			return 0.5;
-		 		default:
-		 			return 0.25;
-			}
-		},
-		getScore:function(){
-			if (this.guessCount == 0)
-				return this.getReplayWeight();
-			if (this.guessCount == 1 && ActiveConfig.testSet.length > 2)
-				return 0.25;
-			return 0;
-		}
+		
 	};
 	
-	var testStats = {
+	var currentTest = {
 		total:0,
-		correct:0
+		correct:0,
+		name:"no"
 	};
 
 
@@ -256,7 +253,7 @@
 
 	var TestSets = {
 		"Simple" : [3,6],
-		"Perfect" : [4,6],
+		"Perfect" : [4,6,11],
 		"All" : [0,1,2,3,4,5,6,7,8,9,10,11],
 		"Major" : [1,3,4,6,8,10,11],
 		"Easy" : [3,4,6,11]	
@@ -322,7 +319,8 @@
 			rangeEnd: document.getElementById("rangeEnd").value,
 			rangeLock: document.getElementById("lockStart").checked,
 			intervalDir: document.getElementById("intervalDirSelect").value,
-			playbackModeSelect: document.getElementById("playbackModeSelect").value
+			playbackModeSelect: document.getElementById("playbackModeSelect").value,
+			testSize:$("#testSizeInput").val()
 		};
 	}
 
@@ -330,36 +328,100 @@
 
 		var configInput = readConfigInput();
 
-		// console.log(JSON.stringify(configInput));
-
 		var config = {
+			testSetName:configInput.testSetName,
 			testSet:getTestSet(configInput.testSetName),
 			mode: configInput.modeName,
 			rootRange: [noteTone(configInput.rangeStart),noteTone(configInput.rangeEnd)],
-			intervalDirections: configInput.intervalDir
+			intervalDirections: configInput.intervalDir,
+			testSize:configInput.testSize
 		};
 
 		if (configInput.rangeLock == true){
 			config.rootRange[1] = config.rootRange[0];
 		}
 
-
-		// console.log(JSON.stringify(config));
-
 		return config;
 	}
 
-	function updateConfig(){
+	function getShortName(interval){
+		return interval.quality.substring(0,3) + interval.name.match("[0-9]+")[0];
+	}
+
+	function getTestSetName(config){
+
+		var name = "{";
+		name += config.testSetName;
+		// config.testSet.forEach(function(ts){
+		// 	name += getShortName(ts) + ",";
+		// });
+		name = name.substring(0,name.length) + "} {";
+
+		if (config.intervalDirections == "both"){
+			name += "up,down";
+		} else if (config.intervalDirections == "up"){
+			name += "up";
+		}
+		else if (config.intervalDirections == "down"){
+			name += "down";
+		}
+		name += "}";
+
+		name += " {" + noteFromToneNumber(config.rootRange[0]) + "..." + noteFromToneNumber(config.rootRange[1]) + "}"
+
+		return name;
+	}
+
+	function configChanged(){
 
 		ActiveConfig = getConfig();
 
   		if (ActiveConfig.mode == Modes.Test){
-  			testStats.total = testStats.correct = 0;
-  			showMessage("Test mode");
-	  		runIntervalTraining();
+  			startNewTest();
   		}
-	  	else
+	  	else{
+	  		makeTestButtons(ActiveConfig.testSet);
 	  		showMessage("Enter an interval to hear!");
+	  	}
+	}
+
+	function startNewTest()
+	{
+		ActiveConfig = getConfig();
+  			
+		currentTest = {
+			problems: [],
+			name:getTestSetName(ActiveConfig),
+			timestamp: (new Date()).getTime()
+		};
+
+		showMessage("Test mode");
+		nextTestProblem();
+	}
+
+	function getReplayWeight(problem)
+	{
+		switch (problem.replayCount){
+	 		case 0:
+	 		case 1: 
+	 			return 1.0;
+	 		case 2:
+	 			return 0.75;
+	 		case 3:
+	 			return 0.5;
+	 		default:
+	 			return 0.25;
+		}
+		throw "not good";
+	}
+
+	function getScore(problem)
+	{
+		if (problem.guesses.length == 0)
+			return getReplayWeight(problem);
+		if (problem.guesses.length == 1)
+			return 0.25;
+		return 0;
 	}
 
 	function makeTestButtons(testSet){
@@ -376,7 +438,7 @@
 			button = $("#" + newId);
 			button.addClass("play");
 			button.html(intervalName(ts));
-			button.click(function(){intervalGuess(ts);});
+			button.click(function(){intervalEntered(ts);});
 		});
 	}
 
@@ -401,8 +463,7 @@
 		var note2 = note1 + interval;
 
 		if (note2 < ValidNoteRange[0] || note2 > ValidNoteRange[1])
-		 throw "Note " + note2 + " out of range!";
-			// note2 = note1 - interval;
+		 	throw "Note " + note2 + " out of range!";
 
 		return [note1,note2];	
 	}
@@ -427,8 +488,8 @@
 		MidiOutput.playNote(30,1,{velocity:0.0,duration:100});
 
 		MidiOutput.playNote(playNotes[0],1,{time: "+500", velocity:0.6,duration:2000});
-		MidiOutput.playNote(playNotes[1],1,{time: "+1500",velocity:0.6,duration:2000});
-		MidiOutput.playNote(playNotes,1,{time: "+2500",velocity:0.6,duration:2000});
+		MidiOutput.playNote(playNotes[1],2,{time: "+1500",velocity:0.6,duration:2000});
+		MidiOutput.playNote(playNotes,3,{time: "+2500",velocity:0.6,duration:2000});
 
 		lastTones = toneNumbers;
 	}
@@ -484,20 +545,26 @@
 		return testSet[index];
 	}
 
-	function runIntervalTraining()
+	function nextTestProblem()
 	{	
 		var config = ActiveConfig;
 
 		var randomInterval = chooseInterval(config.testSet);
 		var toneNumbers = generateInterval(config.rootRange,config.intervalDirections,randomInterval.interval);
+
+		//new TestRecord()
+		var testProblem = {
+			replayCount : 0,
+			guesses : [],
+			interval : randomInterval,
+			toneNumbers : toneNumbers
+		};
+
+		currentTest.problems.push(testProblem);
+
 		playTones(toneNumbers);		
 		setTimeout(function(){showMessage("what is the interval?");},7000);
 		makeTestButtons(config.testSet);
-		// lastTones = toneNumbers;
-
-		currentTest.pendingInterval = randomInterval;
-		currentTest.replayCount = 0;
-		currentTest.guessCount = 0;
 	}
 
 	function playInterval(interval)
@@ -508,22 +575,6 @@
 		// console.log(JSON.stringify(toneNumbers));
 		playTones(toneNumbers);
 		drawToneNumbers(toneNumbers);
-	}
-
-	function scoreTest(test){
-		testStats.correct += test.getScore();
-		testStats.total++;
-		document.getElementById("score").innerHTML = "Score: " + testStats.correct + "/" + testStats.total;
-
-		resultList.set(resultList.length-1,testStats);
-		updateResultList();
-
-		if (testStats.total >= 15){
-			if (resultList) {
-				resultList.push({correct:0,total:0});
-			}
-			updateConfig();
-		}
 	}
 
 	function intervalEntered(interval){
@@ -541,25 +592,36 @@
 		}
 	}
 
+	function finishCurrentTest()
+	{
+		console.log(JSON.stringify(currentTest));
+		resultList.push(currentTest);
+		updateResultList();
+		showMessage("Test completed. Start a new test when ready!");
+	}
 
 	function intervalGuess(guessedInterval)
 	{
-		if (currentTest.pendingInterval == null) {
-			runIntervalTraining();
-			return;
-		}
+		var currentProblem = currentTest.problems[currentTest.problems.length-1];
 			
-		if (guessedInterval.interval == currentTest.pendingInterval.interval)
+		if (guessedInterval.interval == currentProblem.interval.interval)
 		{
 			showMessage("Correct, it was " + intervalName(guessedInterval));
 			drawToneNumbers(lastTones);	
-			scoreTest(currentTest);
-			runIntervalTraining();
+
+			currentProblem.solved = true;
+
+			$("#score").html(renderResult(currentTest,false));
+			
+			if (currentTest.problems.length >= ActiveConfig.testSize){
+				finishCurrentTest();
+			} else {
+				nextTestProblem();
+			}
 		} else {
-			showMessage("sorry, not a " + intervalName(guessedInterval) + ". That sounds like this!");//- try again :)");
-			currentTest.guessCount++;
-			currentTest.replayCount++;
-			// playTones(lastTones);
+			showMessage("sorry, not a " + intervalName(guessedInterval) + ". That sounds like this!");
+			currentProblem.guesses.push(guessedInterval);
+
 			var testTones = lastTones;
 			var guessedTones = generateInterval([lastTones[0],lastTones[0]],ActiveConfig.intervalDirections,guessedInterval.interval);
 			playTones(guessedTones);
@@ -576,19 +638,37 @@
 
   		initVF();
   		drawToneNumbers([noteTone({name:"C#",octave:4}),noteTone({name:"G",octave:4})]);
+  		loadCharts();
 
-  		updateConfig();
 	}
 
 	function clearHistory(){
 		resultList.clear();
+		updateResultList();
 	}
 
 	function setResultList(_resultList){
 		resultList = _resultList;
-		if (resultList.length == 0)
-			resultList.push({correct:0,total:0});
 		updateResultList();
+		startNewTest();
+	}
+
+	function renderResult(result,showInfo){
+
+		var score = 0;
+		var maxScore = 0;
+
+		result.problems.forEach(function(test){
+			score += getScore(test);
+			maxScore += 1;
+		})
+
+		var text = score + "/" + maxScore;
+		
+		if (showInfo)
+			text += " " + result.name;
+
+		return text;
 	}
 
 	function updateResultList()
@@ -606,8 +686,9 @@
 			text.setAttribute("class","test-scores");
 			resultDiv.append(text);
 
-			text.innerHTML = result.correct + "/" + result.total;
+			text.innerHTML = renderResult(result,true);
 		}
+		drawSeriesChart();
 	}
 
 	WebMidi.enable(function(err){
@@ -627,7 +708,7 @@
 		if (lastTones)
 		{
 			playTones(lastTones);
-			currentTest.replayCount++;
+			currentTest.problems[currentTest.problems.length-1].replayCount++;
 		}
 	}
 
@@ -810,8 +891,8 @@
 	
 
 
-</script>
- <script type="text/javascript">
+	</script>
+ 	<script type="text/javascript">
       // Client ID and API key from the Developer Console
       var clientId = '643761622582-s5a2tbc11l64d7sshuuaktr8ercu8ulc.apps.googleusercontent.com';
       var SCOPES = "https://www.googleapis.com/auth/drive";
@@ -819,7 +900,7 @@
       var authorizeButton = document.getElementById('authorize-button');
       var signoutButton = document.getElementById('signout-button');
 
- 	var realtimeUtils = new utils.RealtimeUtils({ clientId: clientId });
+ 		var realtimeUtils = new utils.RealtimeUtils({ clientId: clientId });
 
       authorize();
 
@@ -845,7 +926,7 @@
       function start() {
         // With auth taken care of, load a file, or create one if there
         // is not an id in the URL.
-        var id = "0B6eNzoTXZGgIc3VBNWtHemtaM1k";//realtimeUtils.getParam('id');
+        var id = "0B6eNzoTXZGgIdkhrMWMxYnNTMm8";//realtimeUtils.getParam('id');
         if (id) {
           // Load the document id from the URL
           realtimeUtils.load(id.replace('/', ''), onFileLoaded, onFileInitialize);
@@ -876,6 +957,176 @@
       
 
 	</script>	
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+
+	function loadCharts()
+	{
+		google.charts.load('current', {'packages':['corechart','bar']});
+		google.charts.setOnLoadCallback(drawSeriesChart);
+	}
+
+	function makeGuessMap(resultList){
+
+		var guessMap = {};
+
+		for (var i=0;i<resultList.length;i++){
+			var testRecord = resultList.get(i);
+
+			testRecord.problems.forEach(function(problem){
+
+				problem.guesses.forEach(function(guess){
+
+					var key = getShortName(problem.interval) + "_" + getShortName(guess);
+					if (!guessMap[key]){
+						guessMap[key] = {
+							count:0,
+							guessed:guess,
+							played:problem.interval,
+							setId:0,
+							playedTones:[]
+						};
+					}
+					guessMap[key].playedTones.push(problem.toneNumbers);
+					guessMap[key].count++;
+				});
+
+				var solveKey = getShortName(problem.interval);
+				if (!guessMap[solveKey]){
+					guessMap[solveKey] = {
+						count:0,
+						guessed:problem.interval,
+						played:problem.interval,
+						setId:1,
+						playedTones:[]	
+					};
+				}
+				guessMap[solveKey].playedTones.push(problem.toneNumbers);
+				guessMap[solveKey].count++;
+			});
+		}
+		return guessMap;
+	}
+
+	function dataFromGuessMap(guessMap){
+		var data = [];
+		data.push(['ID','Guessed','Played','','Count']);
+
+
+		for (var intervalGuessName in guessMap){
+			var intervalGuess = guessMap[intervalGuessName];
+			data.push([intervalGuessName,intervalGuess.guessed.interval,intervalGuess.played.interval,intervalGuess.setId,intervalGuess.count]);
+		}
+		
+		return data;
+	}
+
+	function getAxesFromGuessMap(guessMap){
+
+		var hTicksMap = {},vTicksMap = {};
+
+		for (var intervalGuessName in guessMap){
+			var intervalGuess = guessMap[intervalGuessName];
+			var guessLabel = getShortName(intervalGuess.guessed);
+			var playedLabel = getShortName(intervalGuess.played);
+			hTicksMap[playedLabel] = {v:intervalGuess.played.interval,f:playedLabel};
+			vTicksMap[guessLabel] = {v:intervalGuess.guessed.interval,f:guessLabel};			
+		}
+
+		function extractArray(tickMap){
+			var ticks = [];
+
+			for (var tick in tickMap){
+				ticks.push(tickMap[tick]);
+			}
+
+			return ticks.sort(function(a,b){ return a.v - b.v});
+		};
+
+		return {hTicks:extractArray(hTicksMap),vTicks:extractArray(vTicksMap)};
+	}
+
+	function drawIntervalToneChart(intervalGuesses)
+	{
+		var chart = new google.visualization.ColumnChart(document.getElementById('toneChartDiv'));
+
+		var dataArray = [['Root','Count']];
+		var toneCounts = {};
+		var toneTicks = [];
+		
+		intervalGuesses.forEach(function(intervalGuess){
+			
+		intervalGuess.playedTones.forEach(function(tones){
+				if (toneCounts[tones[0]] == null){
+					toneCounts[tones[0]] = 0;
+				}
+				toneCounts[tones[0]]++;
+			});
+
+			for (var tone in toneCounts){
+				dataArray.push([1*tone,toneCounts[tone]]);
+				toneTicks.push({v:1*tone,f:noteFromToneNumber(tone)});
+			}
+		});
+
+
+		toneTicks.sort(function(a,b){ return a.v - b.v});
+
+		var data = google.visualization.arrayToDataTable(dataArray);
+
+		var options = {
+			hAxis: {title: 'Played',ticks:toneTicks},//,viewWindow:{max:toneTicks[toneTicks.length-1].v+1,min:toneTicks[0].v-1}},
+			vAxis: {title: 'Count'},
+			width:500,
+			height:500,
+			chartArea:{left:50,top:30,width:'80%',height:'80%'}			
+		}; 
+
+      	chart.draw(data, options);
+	}
+
+	function drawSeriesChart() 
+	{
+		if (!resultList) {
+			console.log("No result list :(");
+			return;
+		}
+
+
+      	var chart = new google.visualization.BubbleChart(document.getElementById('series_chart_div'));
+
+		var guessMap = makeGuessMap(resultList);
+		var data = google.visualization.arrayToDataTable(dataFromGuessMap(guessMap));
+
+		var intervalTicks = getAxesFromGuessMap(guessMap);
+
+		var options = {
+			hAxis: {title: 'Played',ticks:intervalTicks.hTicks,viewWindow:{max:13,min:1}},
+			vAxis: {title: 'Guessed',ticks:intervalTicks.vTicks,viewWindow:{max:13,min:1}},
+			width:500,
+			height:500,
+			// chartArea: {width: '90%', height: '90%'},
+			 chartArea:{left:50,top:30,width:'80%',height:'80%'},
+			bubble: {textStyle: {fontSize: 11}},
+			sizeAxis:{minValue: 1,  maxSize: 10},
+			colorAxis:{legend:{position:"none"},colors:['red','orange']},
+			bubble:{textStyle:{opacity:0}}
+		};
+
+      	google.visualization.events.addListener(chart, 'select', function(){
+      		var selection = chart.getSelection();
+      		var bubbles = [];
+      		selection.forEach(function(selected){
+	      		var bubbleId = data.getValue(selected.row,0);
+	      		bubbles.push(guessMap[bubbleId]);
+	      	});
+	      	drawIntervalToneChart(bubbles);
+      	});
+
+      	chart.draw(data, options);
+  	}
+
+    </script>
 </html>
 
 
