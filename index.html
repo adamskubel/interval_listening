@@ -2,208 +2,263 @@
 <header>
 </header>
 <style type="text/css">
-	div.words {
-		font-size:20;
+	div {
+		font-size:30;
 		vertical-align: center;
 		color:white;
 		font-family: sans-serif;
 		height:50px;
-		background-color:#666666;
-		margin-top:30px;
-		margin-left:30px;
-		margin-right:30px;
-		width:auto;
-		padding: 5px;
-	}
-
-	.words-nobg {
-		font-size:20;
-		vertical-align: center;
-		color:white;
-		font-family: sans-serif;
-		margin-top:30px;
-		margin-left:30px;
-		margin-right:30px;
-		width:auto;
-	}
-
-	.test-scores {
-		font-size:12;
-		vertical-align: center;
-		color:white;
-		font-family: sans-serif;
-		margin-top:15px;
-		margin-left:15px;
-		margin-right:15px;
-		margin-bottom:15px;
-	}
-
-	.clearfix::after {
-	    content: "";
-	    clear: both;
-	    display: table;
-	}
-
-	.play {
-		font-size:16;
-		margin-top:15px;
-		margin-bottom:15px;
-		vertical-align: center;
-		font-family: sans-serif;
-		margin-left:15px;
-		margin-right:15px;
-		background-color: #888888;
-		color: white;
-	}
-
-
-	select.config {
-		background-color: #888888;
-		width:200px;
-	}
-
-	input.config {
-		background-color: #888888
-	}
-
-	div.config {
-		margin-top:10px;
-		margin-bottom:10px;
-		margin-left:10px;
-		margin-right:10px;
-	}
-
-	.config {
-		color: white;
-		margin-top:5px;
-		margin-bottom:5px;
-		font-size: 14;
-		font-family: sans-serif;
+		background-color:darkblue;
+		margin-top:0px;
+		width:10px;
 	}
 
 </style>
-<head>
-<!-- Load the Realtime JavaScript library -->
-    <script src="https://apis.google.com/js/api.js"></script>
-
-    <!-- Load the utility library -->
-    <script src="https://www.gstatic.com/realtime/realtime-client-utils.js"></script>
-</head>
-<body style="background-color: #222222">
-	<div class="words" id="result">Hello!</div>
-	<div id="buttons">
-		halp
-	</div>
-	<div>			
-		<a  class="words-nobg"  id="score">0/0</a>
-		<input  class="play" id="guessInput" type="text" onkeydown="onTextKey(event)"  />
-		<button class="play" onclick="replayInterval()">Replay</button>	
-	</div>
-	<div style="">
-		<div id="music2" style="float:left">
-			<div id="music">
-			</div>
-			<div>
-				<button class="play" onclick="replayIllustrated()">Play these</button>
-				<button class="play" onclick="illustrateLast()">Show me</button>
-			</div>
-		</div>
-		<div id="controls" class="config" style="float:left">
-			<div class="config">
-				<input type="radio" id="modeSelect" name="modeSelect" value="Train" onclick="configChanged()">Train</input>
-				<input type="radio" id="modeSelect" name="modeSelect" value="Test" onclick="configChanged()" checked>Test</input>
-				
-			</div>
-			<div class="config">
-				<div class="config">
-					<label for="setSelect">Test Set</label>
-					<select id="setSelect" class="config">
-						<option value="Simple" >Simple</option>
-						<option value="Perfect" >Perfect</option>
-						<option value="Easy" >Easy</option>
-						<option value="Major" selected="true">Major</option>
-						<option value="All">All</option>
-					</select>
-				</div>
-				<div class="config">
-					<div>
-		  				<label for="rangeStart">From:</label>
-						<input class="config" id="rangeStart" type="text" value="C2"/>
-						<label for="rangeEnd">To:</label>
-						<input class="config" id="rangeEnd" type="text" value="C4"/>
-					</div>	
-					<div>	
-						<label for="lockStart">Lock:</label>
-						<input class="config" id="lockStart" type="checkbox" selected="false"/>
-					</div>
-				</div>
-				<div class="config">
-					<label for="intervalDirSelect">Direction</label>
-					<select id="intervalDirSelect" class="config">
-						<option value="up">up</option>
-						<option value="down">down</option>
-						<option value="both">both</option>
-					</select>
-				</div>
-				<div class="config">
-					<label for="playbackModeSelect">Playback Mode</label>
-					<select id="playbackModeSelect" class="config">
-						<option value="both">both</option>
-						<option value="sequence">sequence</option>
-						<option value="chord">chord</option>
-					</select>
-				</div>
-				<div class="config">
-					<label for="testSizeInput">Test size:</label>			
-					<input class="config" id="testSizeInput" type="text" value="15"></input>
-				</div>
-				<div class="config">
-					<button class="play" onclick="startNewTest()">New Test</button>
-					<button class="play" onclick="finishCurrentTest()">Save Test</button>
-					<button class="play" style="display:none" id="authorize-button">Authorize</button>
-				</div>
-			</div>
-		</div>			
-		<div class="config" style="float:left;background-color: #444444" >
-			<button class="play" onclick="clearHistory()">Clear History</button>
-			<div id="testResults" >
-			</div>
-		</div>	
-		<div style="width: 1000px; height: 500px; display:table"></div>
-			<div id="series_chart_div" style="width: 500px; height: 500px; float:left;"></div>
-			<div id="toneChartDiv" style="width: 500px; height: 500px; float:left;"></div>
-		</div>
-	</div>
-</body>
-
-<script src="node_modules/jquery/dist/jquery.min.js"></script>
 <script src="node_modules/webmidi/webmidi.min.js"></script>
-<script src="https://unpkg.com/vexflow/releases/vexflow-min.js"></script>
-<script type="text/javascript">
-	
+<script type="text/javascript" src="node_modules/paper/dist/paper-full.js"></script>
+<script type="text/paperscript" canvas="myCanvas">
+
+	var pendingNotes = {};
+	var timeline = [];
+	var noteList = [];
+	var timeOffset = 0;
+	var lastNoteTime = 0;
+	var timeState = "new";
 	var keyMap = {};
-	var resultList;
+	var ScaleSize = 12;
 
-	var currentTest = {
-		pendingInterval:null,
-		replayCount:0,
-		guessCount:0,
-		
-	};
+	var PlayingPixelsPerSecond = 0.1;
+	var NoteSpacing = 20;
+	var NoteWidth = 35;
+	var FirstNote = {name:"C",octave:-1};
+	var CutoffPos = 2000;
+	var SilenceDelay = 500;
+	var HarmonyTime = 200;
 	
-	var currentTest = {
-		total:0,
-		correct:0,
-		name:"no"
-	};
+	var patternMatches = {};
+
+	var PatternDefinitions = [
+		// {name:'Major4',pattern:[4,3,5],color:{hue:40,saturation:1.0,brightness:1.0}},
+		{name:'Major',pattern:[4,3],color:{hue:0,saturation:1.0,brightness:1.0}},
+		// {name:'Minor4',pattern:[3,4,5],color:{hue:40,saturation:1.0,brightness:1.0}},
+		{name:'Minor',pattern:[3,4],color:{hue:50,saturation:1.0,brightness:1.0}},
+		{name:'dim7',pattern:[3,3,3],color:{hue:120,saturation:1.0,brightness:1.0}},
+		{name:'Dim',pattern:[3,3],color:{hue:120,saturation:1.0,brightness:1.0}},
+		{name:'Aug',pattern:[4,4],color:{hue:200,saturation:1.0,brightness:1.0}},
+		{name:'Maj6',pattern:[9],color:{hue:120,saturation:1.0,brightness:1.0}}
+	];	
+	var patterns = [];
 
 
-	var NoteRange = [notePosition({name:"C",octave:3}),notePosition({name:"C",octave:4})];
-	var MidiOutput;
-	var ActiveConfig = null;
-	var illustratedTones;
+	function makePianoNote(sourceEvent){
 
-	var ToneCutoff = 41;
+		var e = {event:sourceEvent,note:sourceEvent.note,canDelete:false};
+
+		e.rect = new Path.Rectangle(new Point(0,0), new Size(NoteWidth,200));
+		e.rect.fillColor = 'blue';
+		e.rect.fillColor.alpha = 0.05 + Math.max(0,((0.95/80.0) * Math.max(sourceEvent.rawVelocity-20,0)));
+		e.rect.fillColor.saturation = 0.05 + Math.max(0,((0.95/80.0) * Math.max(sourceEvent.rawVelocity-20,0)));
+		e.rect.fillColor.hue = sourceEvent.rawVelocity * (360.0/90.0);
+
+		e.line = new Path.Line(new Point(0,0),new Point(2000,0));
+		e.line.strokeColor = 'black';
+		e.line.strokeColor.alpha = 0.1;
+
+		
+
+		e.getKey = function(){return this.note.name + this.note.octave};
+		e.getTimeKey = function(){return this.note.name + this.note.octave + this.event.timestamp};
+
+		var name = sourceEvent.note.name + " (" + sourceEvent.rawVelocity + ")";
+
+		e.label = new PointText({
+					content:name,
+					justification: 'left',
+					fontSize: 12
+					// strokeColor:'black',
+					// shadowColor:'white',
+					// shadowOffset: new Point(0,0),
+					// shadowBlur: 5
+				});
+
+		e.draw = function(drawTime){
+
+			var rect = this.rect;
+			var line = this.line;
+			var endline = this.endline;
+
+			var bottom = getDrawPos(drawTime,this.event.timestamp);
+
+			var endTime = drawTime;
+			if (this.endTime)
+				endTime = this.endTime;
+
+			var top = getDrawPos(drawTime,endTime);
+			var height = top - bottom;
+			
+			rect.segments[0].point.y = bottom;
+			rect.segments[3].point.y = bottom;
+
+			rect.segments[1].point.y = top;
+			rect.segments[2].point.y = top;
+
+			rect.position.x = (notePosition(this.note) - notePosition(FirstNote)) * NoteSpacing;
+
+			line.segments[0].point.y = bottom;
+			line.segments[1].point.y = bottom;
+
+			this.top = top;
+			this.left = rect.position.x-(NoteWidth/2);
+			this.right = rect.position.x+(NoteWidth/2);
+			this.bottom = bottom;
+
+			if (endline){
+				endline.segments[0].point.y = top;
+				endline.segments[1].point.y = top;
+			}
+
+			this.label.point = new Point(this.left,bottom - this.label.strokeBounds.height/2);
+
+			if (bottom > CutoffPos){
+				this.canDelete = true;
+			}
+		}
+
+		e.delete = function(){
+			this.rect.remove();
+			this.line.remove();
+		};
+
+		e.endEvent = function(timestamp){
+
+			//this.endline = new Path.Line(new Point(0,0),new Point(2000,0));
+			//this.endline.strokeColor = 'black';
+			//this.endline.strokeColor.alpha = 0.1;
+			this.endTime = timestamp;
+			this.duration = timestamp - this.event.timestamp;
+		}
+
+		e.getNoteNumber = function(){
+			if (!this._noteNum) {
+				this._noteNum = noteTone(this.note);				
+			}
+			return this._noteNum;
+		}
+
+		return e;		
+	}
+
+	function makePattern(pattern,inversion,patternDef)
+	{
+		var patternName = patternDef.name;
+		var patternColor = new Color(patternDef.color);
+		// patternColor.saturation = 1.0 / Math.max(1,inversion+1);	
+
+		if (inversion != 0) {
+			patternName = patternDef.name + " Inv" + inversion;
+		}
+
+		return {
+			pattern : pattern,
+			inversion : inversion,
+			color : patternColor,
+			name : patternDef.name,
+			patternName : patternName,
+			rootPosition : ((pattern.length+1) - inversion)%(pattern.length+1)
+		};
+	}
+
+	function makePatternMatch(matchedNotes,patternDef){
+
+		var patternMatch = {notes:matchedNotes,patternDef:patternDef,canDelete:false};
+
+		patternMatch.draw = function(){
+
+			if (!this.rect){
+
+				this.rect = new Path.Rectangle(new Point(0,0), new Size(1,1));
+				
+				this.rect.fillColor = this.patternDef.color.clone();
+				this.rect.fillColor.alpha = 0.05;
+
+				this.rect.strokeColor = this.patternDef.color.clone();
+				this.rect.strokeColor.alpha = 0.8;
+				
+
+				this.label = new PointText({
+					content:this.getName(),
+					justification: 'left',
+					fontSize: 15
+					// strokeColor:'black',
+					// shadowColor:'white',
+					// shadowOffset: new Point(0,0),
+					// shadowBlur: 5
+				});
+
+				// this.label.fillColor.brightness = 0.2;
+				// this.label.fillColor.alpha = 1.0;
+
+			}
+
+			var rect = this.rect;
+			var bottom = 0, top = 10000, left = 10000, right = 0;
+
+			for (var i=0;i<this.notes.length;i++){
+				var note = this.notes[i];
+				bottom = Math.max(bottom,note.bottom);
+				top = Math.min(top,note.top);
+				right = Math.max(right,note.right);
+				left = Math.min(left,note.left);
+				this.canDelete = note.canDelete && this.canDelete;
+			}
+
+			// this.label.point = new Point(left + (right-left)/2,top + (bottom-top)/2);
+			this.label.point = new Point(left,bottom + this.label.strokeBounds.height);
+
+			rect.segments[0].point = new Point(left,bottom);
+			rect.segments[3].point = new Point(right,bottom);
+
+			rect.segments[1].point = new Point(left,top);
+			rect.segments[2].point = new Point(right,top);
+		}
+
+		patternMatch.delete = function(){
+			if (this.rect)
+				this.rect.remove();
+			if (this.label)
+				this.label.remove();
+		};
+
+		patternMatch.getName = function(){
+			return this.notes[this.patternDef.rootPosition].note.name + "_" + this.patternDef.patternName;
+		};
+
+		patternMatch.getUniqueKey = function(){
+			return this.notes[this.patternDef.rootPosition].getTimeKey() + "_" + this.patternDef.patternName;
+		};
+
+		return patternMatch;
+	}
+
+
+	function init()
+	{
+		timeline.push({start:(new Date()).getTime(),pixelsPerSecond:PlayingPixelsPerSecond});
+		timeState = "running";
+		lastNoteTime = (new Date()).getTime();
+
+		patterns = [];
+		for (var p = 0;p<PatternDefinitions.length;p++)
+		{
+			var patternDef = PatternDefinitions[p];
+			var inversions = generateInversions(patternDef.pattern);
+			for (var i = 0;i< inversions.length;i++)
+			{
+				patterns.push(makePattern(inversions[i],i,patternDef));
+			}
+		}
+		console.log(JSON.stringify(patterns));
+	}
 
 	function getKey(event){
 		return event.note.name + event.note.octave;
@@ -211,937 +266,398 @@
 
 	function notePosition(note){
 		return noteTone(note);
+		// var noteVal = (((note.name.charCodeAt(0) - "C".charCodeAt(0)) % 7) + 7) % 7;
+		// if (note.name.length == 2) noteVal += 0.5;
+		// return  (noteVal + note.octave * 7) + 18;
 	}
 
-	var NoteOrder = [
-		"C",
-		"C#",
-		"D",
-		"D#",
-		"E",
-		"F",
-		"F#",
-		"G",
-		"G#",
-		"A",
-		"A#",
-		"B"
-	];
-
-	var Intervals = [
-		{ quality: "Minor", name: "2nd",  interval: 1 },
-		{ quality: "Major", name: "2nd",  interval: 2 },
-		{ quality: "Minor", name: "3rd",  interval: 3 },
-		{ quality: "Major", name: "3rd",  interval: 4 },
-		{ quality: "Perfect", name: "4th",  interval: 5 },
-		{ quality: "Diminished", name: "5th",  interval: 6 },
-		{ quality: "Perfect", name: "5th",  interval: 7 },
-		{ quality: "Minor", name: "6th",  interval: 8 },
-		{ quality: "Major", name: "6th",  interval: 9 },
-		{ quality: "Minor", name: "7th",  interval: 10 },
-		{ quality: "Major", name: "7th",  interval: 11 },
-		{ quality: "Perfect", name: "8th",  interval: 12 }
-	]
-
-	var IntervalNameMappings = {
-		Diminished:{2:0,3:2,4:4,5:6,6:7,7:9,8:11},
-		Minor:{2:1,3:3,6:8,7:10},
-		Perfect:{4:5,5:7,8:12},
-		Major:{2:2,3:4,6:9,7:11},
-		Augmented:{1:1,2:3,3:5,4:6,5:8,6:10,7:12,8:13}
-	};
-
-	var TestSets = {
-		"Simple" : [3,6],
-		"Perfect" : [4,6,11],
-		"All" : [0,1,2,3,4,5,6,7,8,9,10,11],
-		"Major" : [1,3,4,6,8,10,11],
-		"Easy" : [3,4,6,11]	
-	}
-
-	var Modes = {Train:"Train",Test:"Test"};
-
-	var ValidNoteRange = [0,127];
-
-	function getIntervalByName(quality,name){
-
-		var numSuffix = function numSuffix(n){
-			if (n == 1) return "st";
-			if (n == 2) return "nd";
-			if (n == 3) return "rd";
-			else return "th";
-		};
-
-		var interval = IntervalNameMappings[quality][name*1];
-
-		if (!interval)
-			throw "hey man " + quality + " " + name + " is not a valid interval!"
-
-		return {quality:quality,name:name+numSuffix(name),interval:interval};
-	}
-
-	function getTestSet(testMode)
+	function noteOrderComparator(note1,note2)
 	{
-		var testSet = [];
-		var testSetDef = TestSets[testMode];
-		if (!testSetDef) {
-			throw "no test set with name " + testMode;
-		}
-
-		for (var i=0;i<Intervals.length;i++){
-			
-			for (var j=0;j<testSetDef.length;j++){
-				if (i == testSetDef[j])
-				{
-					testSet.push(Intervals[i]);
-					break;
-				}
-			}
-		}
-		return testSet;
-	}
-
-	function readConfigInput(){
-
-		var radios = document.getElementsByName('modeSelect');
-		var modeSelect = Modes.Test;
-		for (var i = 0, length = radios.length; i < length; i++) {
-		    if (radios[i].checked) {
-		        modeSelect = radios[i].value; 
-		        break;
-		    }
-		}
-
-		return {
-			testSetName: document.getElementById("setSelect").value,
-			modeName: modeSelect,
-			rangeStart: document.getElementById("rangeStart").value,
-			rangeEnd: document.getElementById("rangeEnd").value,
-			rangeLock: document.getElementById("lockStart").checked,
-			intervalDir: document.getElementById("intervalDirSelect").value,
-			playbackModeSelect: document.getElementById("playbackModeSelect").value,
-			testSize:$("#testSizeInput").val()
-		};
-	}
-
-	function getConfig(){
-
-		var configInput = readConfigInput();
-
-		var config = {
-			testSetName:configInput.testSetName,
-			testSet:getTestSet(configInput.testSetName),
-			mode: configInput.modeName,
-			rootRange: [noteTone(configInput.rangeStart),noteTone(configInput.rangeEnd)],
-			intervalDirections: configInput.intervalDir,
-			testSize:configInput.testSize
-		};
-
-		if (configInput.rangeLock == true){
-			config.rootRange[1] = config.rootRange[0];
-		}
-
-		return config;
-	}
-
-	function getShortName(interval){
-		return interval.quality.substring(0,3) + interval.name.match("[0-9]+")[0];
-	}
-
-	function getTestSetName(config){
-
-		var name = "{";
-		name += config.testSetName;
-		// config.testSet.forEach(function(ts){
-		// 	name += getShortName(ts) + ",";
-		// });
-		name = name.substring(0,name.length) + "} {";
-
-		if (config.intervalDirections == "both"){
-			name += "up,down";
-		} else if (config.intervalDirections == "up"){
-			name += "up";
-		}
-		else if (config.intervalDirections == "down"){
-			name += "down";
-		}
-		name += "}";
-
-		name += " {" + noteFromToneNumber(config.rootRange[0]) + "..." + noteFromToneNumber(config.rootRange[1]) + "}"
-
-		return name;
-	}
-
-	function configChanged(){
-
-		ActiveConfig = getConfig();
-
-  		if (ActiveConfig.mode == Modes.Test){
-  			startNewTest();
-  		}
-	  	else{
-	  		makeTestButtons(ActiveConfig.testSet);
-	  		showMessage("Enter an interval to hear!");
-	  	}
-	}
-
-	function startNewTest()
-	{
-		ActiveConfig = getConfig();
-  			
-		currentTest = {
-			problems: [],
-			name:getTestSetName(ActiveConfig),
-			timestamp: (new Date()).getTime()
-		};
-
-		showMessage("Test mode");
-		nextTestProblem();
-	}
-
-	function getReplayWeight(problem)
-	{
-		switch (problem.replayCount){
-	 		case 0:
-	 		case 1: 
-	 			return 1.0;
-	 		case 2:
-	 			return 0.75;
-	 		case 3:
-	 			return 0.5;
-	 		default:
-	 			return 0.25;
-		}
-		throw "not good";
-	}
-
-	function getScore(problem)
-	{
-		if (problem.guesses.length == 0)
-			return getReplayWeight(problem);
+		if (note1 && note2)
+			return note1.getNoteNumber() - note2.getNoteNumber();
+		
+		if (note1 && !note2)
+			return 1;
+		if (note2 && !note1)
+			return -1;
+		
 		return 0;
 	}
+  
+	var noteMap = {
+		"C":0,
+		"C#":1,
+		"D":2,
+		"D#":3,
+		"E":4,
+		"F":5,
+		"F#":6,
+		"G":7,
+		"G#":8,
+		"A":9,
+		"A#":10,
+		"B":11
+	};
 
-	function makeTestButtons(testSet){
+	function generateInversions(pattern){
 
-		$("#buttons").empty();
+		var inversions = [];
+		inversions.push(pattern);
 
-		var count =0;
-		testSet.forEach(function(ts){
+		if (pattern.length < 2) return inversions;
 
-			var button = document.createElement("button");
-			 $("#buttons").append(button);
-			 var newId = "guess_" + count++;
-			button.setAttribute("id",newId);
-			button = $("#" + newId);
-			button.addClass("play");
-			button.html(intervalName(ts));
-			button.click(function(){intervalEntered(ts);});
-		});
-	}
+		for (var i = 0; i < pattern.length; i++){
 
-	function randomSign(){
+			var lastInversion = inversions[inversions.length-1];
+			var inversion = lastInversion.slice(1,lastInversion.length);
 
-		var rand = Math.random();
-		if (rand >= 0.5)
-			return 1;
-		return -1;
-	}
+			var newInterval = ScaleSize - lastInversion.reduce(function(a,b){return a+b});
+			if (newInterval != 0)
+				inversion.push(newInterval);
+			else 
+				inversion.push(lastInversion[0]);
 
-	function generateInterval(noteRange, intervalDirections,intervalSize){
-
-		var note1 = noteRange[0] + Math.floor((Math.random() * (noteRange[1] - noteRange[0])));
-		
-		var interval = intervalSize;
-		if (intervalDirections == "both")
-			interval *= randomSign();
-		else if (intervalDirections == "down")
-			interval *= -1;
-
-		var note2 = note1 + interval;
-
-		if (note2 < ValidNoteRange[0] || note2 > ValidNoteRange[1])
-		 	throw "Note " + note2 + " out of range!";
-
-		return [note1,note2];	
-	}
-
-	function noteFromToneNumber(toneNumber){		
-		return NoteOrder[toneNumber%12]+Math.floor(toneNumber/12.0);		
-	}
-
-	function intervalName(interval){
-		return interval.quality + " " + interval.name;
-	}
-
-	function playTones(toneNumbers){
-
-		var playNotes = [];
-		for (var i = 0; i < toneNumbers.length; i++){
-			var noteName = noteFromToneNumber(toneNumbers[i]);			
-			playNotes.push(noteName);
+			if (JSON.stringify(inversion) != JSON.stringify(pattern))
+				inversions.push(inversion);
 		}
-		console.log("Playing :" + JSON.stringify(playNotes));
-
-		MidiOutput.playNote(30,1,{velocity:0.0,duration:100});
-
-		MidiOutput.playNote(playNotes[0],1,{time: "+500", velocity:0.6,duration:2000});
-		MidiOutput.playNote(playNotes[1],2,{time: "+1500",velocity:0.6,duration:2000});
-		MidiOutput.playNote(playNotes,3,{time: "+2500",velocity:0.6,duration:2000});
-
-		lastTones = toneNumbers;
+		return inversions;
 	}
 
-
-	function noteTone(note)
-	{
-		var NoteNumber = {
-			"C":0,
-			"C#":1,
-			"D":2,
-			"D#":3,
-			"E":4,
-			"F":5,
-			"F#":6,
-			"G":7,
-			"G#":8,
-			"A":9,
-			"A#":10,
-			"B":11
-		};
-
-		if (typeof note == "string" || note instanceof String){
-
-			var nameMatch = "[A-z]+#*";
-			var name = note.match(nameMatch)[0];
-			if (!name) throw "invalid note name: " + note;
-			var octave = note.match(/\d+/g)[0];
-			if (octave == null) throw "invalid note octave " + note;
-
-			return NoteNumber[name] + (octave*12);
-		}
-		else {
-			if (NoteNumber[note.name] == null) throw {"oh":note.name};
-			return NoteNumber[note.name] + (note.octave*12);
-		}
+	function noteTone(note){
+		if (noteMap[note.name] == null) throw {"oh":note.name};
+		return noteMap[note.name] + (note.octave*12);
 	}
 	
+	function matchPattern(intervals,pattern)
+	{ 
+		var match = [];
+		for (var i=0, p = 0;p < pattern.length && i < intervals.length;i++){
+			if (intervals[i] != pattern[p]){
+				p = 0;
+				match = [];
+			} else {
+				p++;
+				match.push(i);
+			}
+		}
+		if (match.length == pattern.length)
+			return match;		
+		return null;
+	}
+
+	function extractMatchedNotes(match,sortedCluster){
+		var matchedNotes = [];
+		for (var i=0;i<match.length+1;i++)
+		{
+			matchedNotes.push(sortedCluster[match[0]+i]);
+		}
+		console.log("Extracted: " + matchedNotes.length);
+		return matchedNotes;
+	}
+
+	function extractValues(obj){
+		var values = [];
+		for (var key in obj){
+			values.push(obj[key]);
+		}
+		return values;
+	}
+
+	function findPatterns(pianoNote) 
+	{
+		var cluster = extractValues(pianoNote.siblings);
+		cluster.push(pianoNote);
+		
+		var sortedCluster = cluster.sort(noteOrderComparator);
+		// console.log(JSON.stringify(sortedCluster));
+
+		var intervals = [];
+		for (var i=0;i<sortedCluster.length-1;i++)
+		{ 
+			intervals.push(sortedCluster[i+1].getNoteNumber() - sortedCluster[i].getNoteNumber());
+		}
+
+		for (var p=0;p<patterns.length;p++)
+		{
+			var patternDef = patterns[p];
+			var match = matchPattern(intervals,patternDef.pattern);
+			if (match)
+			{
+				var matchedNotes = extractMatchedNotes(match,sortedCluster);
+				var patternMatch = makePatternMatch(matchedNotes,patternDef);
+
+				if (!patternMatches[patternMatch.getUniqueKey()])
+				{
+					patternMatches[patternMatch.getUniqueKey()] = patternMatch;
+					console.log("Match: " + patternMatch.getName());
+				} else {
+					console.log("Duplicate match " + patternMatch.getName());
+					patternMatch.delete();
+				}
+				break;
+			}
+		}		
+	}
+
+	
+	function joinPianoNote(pianoNote){
+
+		function compareNote(note1,note2){
+			if (note2.endTime){
+				if (note1.event.timestamp - note2.endTime < HarmonyTime){
+					return true;
+				}
+				return false;
+			}
+			return true;
+		};
+
+		pianoNote.siblings = {};
+
+		for (var i=0;i<noteList.length;i++){
+
+			var note = noteList[i];
+			if (!note) continue;
+			if (compareNote(pianoNote,note)){
+				note.siblings[pianoNote.getTimeKey()] = pianoNote;
+				pianoNote.siblings[note.getTimeKey()] = note;
+			}
+		}
+	}
+
 	function printTimestamp(timestamp){
 		var date =  new Date(timestamp);
 		return date.getMinutes() + ":" + date.getSeconds() + ":" + date.getMilliseconds();
 	}
 
-	var randomCheck = {};
+	var noteOnListener = function (e) 
+	{		
 
-	function chooseInterval(testSet){
-		var index = Math.floor(Math.random()*testSet.length);
-
-		if (randomCheck["count_" + index]) randomCheck["count_" + index]++;
-		else randomCheck["count_" + index] = 1;
-		console.log(JSON.stringify(randomCheck));
-
-		return testSet[index];
-	}
-
-	function nextTestProblem()
-	{	
-		var config = ActiveConfig;
-
-		var randomInterval = chooseInterval(config.testSet);
-		var toneNumbers = generateInterval(config.rootRange,config.intervalDirections,randomInterval.interval);
-
-		//new TestRecord()
-		var testProblem = {
-			replayCount : 0,
-			guesses : [],
-			interval : randomInterval,
-			toneNumbers : toneNumbers
-		};
-
-		currentTest.problems.push(testProblem);
-
-		playTones(toneNumbers);		
-		setTimeout(function(){showMessage("what is the interval?");},7000);
-		makeTestButtons(config.testSet);
-	}
-
-	function playInterval(interval)
-	{
-		var config = ActiveConfig;
-		showMessage("Playing a " + intervalName(interval));
-		var toneNumbers = generateInterval(config.rootRange,config.intervalDirections,interval.interval);
-		// console.log(JSON.stringify(toneNumbers));
-		playTones(toneNumbers);
-		drawToneNumbers(toneNumbers);
-	}
-
-	function intervalEntered(interval){
-
-		ActiveConfig = getConfig();
-
-		if (ActiveConfig.mode == Modes.Train){
-			playInterval(interval);
+		if (timeOffset == 0){
+			timeOffset = (new Date()).getTime() - e.timestamp;
 		}
-		else if (ActiveConfig.mode == Modes.Test) {
-			intervalGuess(interval);
-		}
-		else {
-			throw "Invalid mode " + ActiveConfig.mode;
-		}
-	}
 
-	function finishCurrentTest()
-	{
-		if (currentTest){
-			console.log(JSON.stringify(currentTest));
-			resultList.push(currentTest);
-			updateResultList();
-			showMessage("Test completed. Start a new test when ready!");
-			currentTest = null;
-		}
-	}
+		var now = (new Date()).getTime();
 
-	function intervalGuess(guessedInterval)
-	{
-		var currentProblem = currentTest.problems[currentTest.problems.length-1];
-			
-		if (guessedInterval.interval == currentProblem.interval.interval)
+		if (!e.timestamp) 
+			e.timestamp = now;
+
+
+		var pianoNote = makePianoNote(e);
+
+		joinPianoNote(pianoNote);
+		// findPatterns(pianoNote);
+
+		noteList.push(pianoNote);
+
+		var oldNote = pendingNotes[pianoNote.getKey()];	
+
+		if (oldNote)
 		{
-			showMessage("Correct, it was " + intervalName(guessedInterval));
-			drawToneNumbers(lastTones);	
-
-			currentProblem.solved = true;
-
-			$("#score").html(renderResult(currentTest,false));
-			
-			if (currentTest.problems.length >= ActiveConfig.testSize){
-				finishCurrentTest();
-			} else {
-				nextTestProblem();
-			}
-		} else {
-			showMessage("sorry, not a " + intervalName(guessedInterval) + ". That sounds like this!");
-			currentProblem.guesses.push(guessedInterval);
-
-			var testTones = lastTones;
-			var guessedTones = generateInterval([lastTones[0],lastTones[0]],ActiveConfig.intervalDirections,guessedInterval.interval);
-			playTones(guessedTones);
-			lastTones = testTones;
-		}	
-	}
-
-
-	function showMessage(text){
-		document.getElementById("result").innerHTML = text;
-	}
-
-	function init(){
-
-  		initVF();
-  		drawToneNumbers([noteTone({name:"C#",octave:4}),noteTone({name:"G",octave:4})]);
-  		loadCharts();
-
-	}
-
-	function clearHistory(){
-		resultList.clear();
-		updateResultList();
-	}
-
-	function setResultList(_resultList){
-		resultList = _resultList;
-		updateResultList();
-		startNewTest();
-	}
-
-	function renderResult(result,showInfo){
-
-		var score = 0;
-		var maxScore = 0;
-
-		result.problems.forEach(function(test){
-			score += getScore(test);
-			maxScore += 1;
-		})
-
-		var text = score + "/" + maxScore;
-		
-		if (showInfo)
-			text += " " + result.name;
-
-		return text;
-	}
-
-	function updateResultList()
-	{
-		var resultDiv = $("#testResults");
-		resultDiv.empty();
-		var count = 0;
-		for (var i=0;i<resultList.length;i++){
-			var result = resultList.get(i);
-
-			var text = document.createElement("div");
-
-			var newId = "score_" + count++;
-			text.setAttribute("id",newId);
-			text.setAttribute("class","test-scores");
-			resultDiv.append(text);
-
-			text.innerHTML = renderResult(result,true);
+			console.log("Duplicate note " + oldNote.getKey());			
+			oldNote.endEvent(e.timestamp);
+			delete pendingNotes[oldNote.getKey()];
 		}
-		updateChart(2);
-	}
 
-	function updateChart(chartDepth){
-		drawSeriesChart(resultList.asArray().slice(Math.max(0,resultList.length-chartDepth),resultList.length));
-	}
+		pendingNotes[pianoNote.getKey()] = pianoNote;
+	
+		// console.log("down:  " + pianoNote.getKey() + " V=" + e.rawVelocity + " X=" + notePosition(e.note) + " T=" + printTimestamp(e.timestamp));	
+		
+		lastNoteTime = now;
+		
+	};
+
+	var noteOffListener = function (e) 
+	{
+		var pianoEvent = pendingNotes[getKey(e)];
+		var now = (new Date()).getTime();
+		if (!e.timestamp)
+			e.timestamp = now ;//- timeOffset;
+
+		if (pianoEvent){
+
+			noteList.push(pianoEvent);
+			delete pendingNotes[getKey(e)];
+			pianoEvent.endEvent(e.timestamp);
+
+			// console.log("up:  " + getKey(e) + " V=" + e.rawVelocity + " dT=" + pianoEvent.duration + " T=" + printTimestamp(e.timestamp));		
+		}
+		else 
+		{
+			console.log("Unmatched note " + getKey(e));
+		}
+
+		lastNoteTime = (new Date()).getTime();
+	};
 
 	WebMidi.enable(function(err){
 
-		if (WebMidi.outputs.length <= 0) {
-			console.log("Need outputs man");
-			return;
-		}
+		if (WebMidi.inputs.length > 0){
 
-		MidiOutput = WebMidi.outputs[0];
-		console.log(JSON.stringify(WebMidi.outputs));
-
-		init();
+		  	var input = WebMidi.inputs[0];
+		  	init();
+		  	input.addListener('noteon', "all", noteOnListener);
+		  	input.addListener('noteoff', "all", noteOffListener);
+	  	} else
+	  	{
+	  		console.log("Enabling key mode");
+	  		enableKeyMode();
+	  		init();
+	  	}
 	});
 
-	function replayInterval(){
-		if (lastTones)
-		{
-			playTones(lastTones);
-			currentTest.problems[currentTest.problems.length-1].replayCount++;
-		}
+	function getKeyNoteName(keycode){
+		switch (keycode){
+			case 0x41:
+				return 'C';
+			case 0x53:
+				return 'D';
+			case 0x44:
+				return 'E';
+			case 0x46:
+				return 'F';
+			case 0x47:
+				return 'G';
+			case 0x48:
+				return 'A';
+			case 0x4A:
+				return 'B';
+			default:
+				return null;
+			}
 	}
 
-	function replayIllustrated(){
-		if (illustratedTones){
-			playTones(illustratedTones);
-			pendingInterval = null;
-		}
+	function noteFromKeyPress(e){
+
+		var now = (new Date()).getTime();
+		var noteName = getKeyNoteName(e.keyCode);
+		var event = null;
+		if (noteName)
+		{
+			event = {
+				rawVelocity : 75,
+				velocity : 0.7,
+				timestamp : now, 
+				note : { 
+					name : noteName,
+					octave: 0
+				}
+			};			
+		}				
+		return event;
 	}
-	
-	function illustrateLast(){
-		if (lastTones)
-			drawToneNumbers(lastTones);
-	}
-	
-	function onTextKey(event)
+
+	function enableKeyMode(){
+
+		var noteKeyDown = function keyDownTextField(e) {
+			if (keyMap[e.keyCode]) return;
+			keyMap[e.keyCode] = true;
+			var midiEvent = noteFromKeyPress(e);
+			if (midiEvent)
+				noteOnListener(midiEvent);			  
+		};
+		
+		var noteKeyUp = function keyDownTextField(e) {
+			keyMap[e.keyCode] = false;
+			var midiEvent = noteFromKeyPress(e);
+			if (midiEvent)
+				noteOffListener(midiEvent);			  
+		};
+
+		document.addEventListener("keydown", noteKeyDown, false);
+		document.addEventListener("keyup", noteKeyUp, false);
+
+	};
+
+
+
+	function getDrawPos(now,drawTime)
 	{
-		if (event.keyCode == 13)
-		{
-			var textPattern = "[A-z]+";
+		var time = drawTime;
+		if (drawTime < 1000000)
+			time = drawTime + timeOffset;
 
-			var inputString = document.getElementById("guessInput").value.toLowerCase();
+		var yPos = 0;
+		for (var i = timeline.length-1;i >= 0;i--){
 
-			if (inputString.startsWith("r") ){
-				replayInterval();
+			var timeBlock = timeline[i];
+			var endTime = timeBlock.end;
+			if (i == timeline.length -1)
+			{
+				if (timeBlock.end)
+					console.log("Ended active time block");
+				endTime = now;
+			} else if (!timeBlock.end){
+				console.log("Block " + i + " has no end");
 			}
-			
-
-			var guessString  = inputString.match(textPattern);
-
-			var quality;
-			if (guessString == ("major") || guessString == ("maj")){
-				quality = "Major";
-			}
-			else if (guessString == ("minor") || guessString == ("min")){
-				quality = "Minor";
-			}
-			else if (guessString == ("diminished") || guessString == ("dim") || guessString == "d"){
-				quality = "Diminished";
-			} 
-			else if (guessString == "aug" || guessString == "a" || guessString == "augmented")
-				quality = "Augmented";
-			else if (guessString == ("perfect") || guessString == ("per") || guessString == "p"){
-				quality = "Perfect";
-			} 
-			else {
-				console.log("Invalid quality: " + quality);
-				return;
-			}
-
-			var numberPattern = /\d+/g;
-			var intervalName = inputString.match(numberPattern);
-
-			if (intervalName <= 0) {
-				console.log("Invalid interval name: " + intervalName);				
-				return;
-			}
-
-			var interval = getIntervalByName(quality,intervalName);
-			if (!interval)
-				console.log("Couldn't resolve interval " + quality + "," + intervalName);
+		
+			if (timeBlock.start <= time && endTime >= time)
+			{
+				yPos += timeBlock.pixelsPerSecond * (endTime - time); 
+				break;
+			} else if (timeBlock.start > time) {
+				yPos += timeBlock.pixelsPerSecond * (endTime - timeBlock.start);
+			}	
 			else
-				intervalEntered(interval);
-		}
-	}
-
-
-	var VF;
-	var vfContext;
-	var staveTreble,staveBass;
-
-	function initVF(){
-		VF = Vex.Flow;
-
-		// Create an SVG renderer and attach it to the DIV element named "boo".
-		var div = document.getElementById("music")
-		var renderer = new VF.Renderer(div, VF.Renderer.Backends.SVG);
-
-		// Configure the rendering context.
-		renderer.resize(500, 500);
-		var context = renderer.getContext();
-		context.setFont("Arial", 10, "").setBackgroundFillStyle("#eed");
-		context.setStrokeStyle("#AAAAAA");
-		context.setFillStyle("#AAAAAA");
-
-		// Create a stave of width 400 at position 10, 40 on the canvas.
-		staveTreble = new VF.Stave(10, 40, 400);
-		staveBass = new VF.Stave(10, 140, 400);
-
-		// Add a clef and time signature.
-		staveTreble.addClef("treble");
-		staveBass.addClef("bass");
-		// Connect it to the rendering context and draw!
-
-		staveTreble.setContext(context).draw();
-		staveBass.setContext(context).draw();
-		vfContext = context;
-	}
-
-	function getVFName(toneNumber){
-		return NoteOrder[toneNumber%12] + "/" + (Math.floor(toneNumber/12)+1);
-	}
-
-
-	function makeStaveNote(toneNumber,duration)
-	{
-		var clef = (toneNumber < ToneCutoff) ? "bass" : "treble";
-		var note = new VF.StaveNote({ clef:clef,keys: [getVFName(toneNumber)], duration: duration });
-
-		if (NoteOrder[toneNumber%12].endsWith("#"))
-			note.addAccidental(0,new VF.Accidental("#"));
-
-		return note;
-	}
-
-	function makeGhostNote(toneNumber,duration)
-	{
-		var clef = (toneNumber < ToneCutoff) ? "bass" : "treble";
-		return new VF.GhostNote({clef:clef,keys: [getVFName(toneNumber)], duration: duration })
-	}
-
-	function makeChord(toneNumbers,duration){
-
-		if (toneNumbers == null || toneNumbers.length == 0)
-			return makeGhostNote(0,duration);
-
-		var keys = [];
-		toneNumbers.forEach(function(t){keys.push(getVFName(t));});
-
-		var clef = (toneNumbers[0] < ToneCutoff) ? "bass" : "treble";
-		return new VF.StaveNote({clef: clef, keys:keys,duration: duration});
-	}
-
-	function drawToneNumbers(notes){
-
-		illustratedTones = notes;
-		var chord = [[],[]];
-
-		notes.forEach(function(n){(n < ToneCutoff) ? chord[0].push(n) : chord[1].push(n);})
-
-		var vfNotes = [[],[]];
-
-		notes.forEach(function(n){
-			var active = (n < ToneCutoff) ? 0 : 1;
-			vfNotes[active].push(makeStaveNote(n,"q"));
-			vfNotes[1-active].push(makeGhostNote(n,"q"));
-		});
-
-		for (var i=0;i<chord.length;i++){
-			vfNotes[i].push(makeChord(chord[i],"h"));
+				console.log("No time block found for timestamp " + time);
 		}
 
-		drawNotes(vfNotes[0],vfNotes[1]);
-	}
+		return yPos;
+	}	
 
-	function drawNotes(bassNotes,trebleNotes){
-
-
-		// Create a voice in 4/4 and add above notes
-		var trebleVoice = new VF.Voice({num_beats: 4,  beat_value: 4}).addTickables(trebleNotes).setStave(staveTreble);
-		var bassVoice = new VF.Voice({num_beats: 4,  beat_value: 4}).addTickables(bassNotes).setStave(staveBass);
-	
-		var startX = Math.max(staveTreble.getNoteStartX(), staveBass.getNoteStartX());
-		staveTreble.setNoteStartX(startX);
-		staveBass.setNoteStartX(startX);
-
-		var formatter = new VF.Formatter();
-
-		formatter.joinVoices([trebleVoice]);
-		formatter.joinVoices([bassVoice]);
-		formatter.format([trebleVoice, bassVoice], 400);
-
-		// Render voices
-		vfContext.clear();
-		staveTreble.setContext(vfContext).draw();
-		staveBass.setContext(vfContext).draw();
-		trebleVoice.draw(vfContext, staveTreble); 
-		bassVoice.draw(vfContext, staveBass); 
-	}
 	
 
-
-	</script>
- 	<script type="text/javascript">
-      // Client ID and API key from the Developer Console
-      var clientId = '643761622582-s5a2tbc11l64d7sshuuaktr8ercu8ulc.apps.googleusercontent.com';
-      var SCOPES = "https://www.googleapis.com/auth/drive";
-
-      var authorizeButton = document.getElementById('authorize-button');
-      var signoutButton = document.getElementById('signout-button');
-
- 		var realtimeUtils = new utils.RealtimeUtils({ clientId: clientId });
-
-      authorize();
-
-      function authorize() {
-        // Attempt to authorize
-        realtimeUtils.authorize(function(response){
-          if(response.error){
-            // Authorization failed because this is the first time the user has used your application,
-            // show the authorize button to prompt them to authorize manually.
-            $('#authorize-button').show();
-            button.classList.add('visible');
-            button.addEventListener('click', function () {
-              realtimeUtils.authorize(function(response){
-                start();
-              }, true);
-            });
-          } else {
-              start();
-          }
-        }, false);
-      }
-
-      function start() {
-        // With auth taken care of, load a file, or create one if there
-        // is not an id in the URL.
-        var id = "0B6eNzoTXZGgIdkhrMWMxYnNTMm8";//realtimeUtils.getParam('id');
-        if (id) {
-          // Load the document id from the URL
-          realtimeUtils.load(id.replace('/', ''), onFileLoaded, onFileInitialize);
-        } else {
-          // Create a new document, add it to the URL
-          realtimeUtils.createRealtimeFile('New Quickstart File', function(createResponse) {
-            window.history.pushState(null, null, '?id=' + createResponse.id);
-            realtimeUtils.load(createResponse.id, onFileLoaded, onFileInitialize);
-          });
-        }
-      }
-
-      // The first time a file is opened, it must be initialized with the
-      // document structure. This function will add a collaborative string
-      // to our model at the root.
-      function onFileInitialize(model) {
-        var list = model.createList();
-        model.getRoot().set('test_results',list);
-      }
-
-      // After a file has been initialized and loaded, we can access the
-      // document. We will wire up the data model to the UI.
-      function onFileLoaded(doc) {
-        var resultList = doc.getModel().getRoot().get('test_results');
-        setResultList(resultList);
-      }
-
-      
-
-	</script>	
-	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-
-	function loadCharts()
-	{
-		google.charts.load('current', {'packages':['corechart','bar']});
-		google.charts.setOnLoadCallback(function(){
-			if (resultList){
-				console.log("CHART LOADED LAST");
-				updateResultList();
-			}
-		});
-	}
-
-	function makeGuessMap(resultList){
-
-		var guessMap = {};
-
-		for (var i=0;i<resultList.length;i++){
-			var testRecord = resultList[i];
-
-			testRecord.problems.forEach(function(problem){
-
-				problem.guesses.forEach(function(guess){
-
-					var key = getShortName(problem.interval) + "_" + getShortName(guess);
-					if (!guessMap[key]){
-						guessMap[key] = {
-							count:0,
-							guessed:guess,
-							played:problem.interval,
-							setId:0,
-							playedTones:[]
-						};
-					}
-					guessMap[key].playedTones.push(problem.toneNumbers);
-					guessMap[key].count++;
-				});
-
-				var solveKey = getShortName(problem.interval);
-				if (!guessMap[solveKey]){
-					guessMap[solveKey] = {
-						count:0,
-						guessed:problem.interval,
-						played:problem.interval,
-						setId:1,
-						playedTones:[]	
-					};
+	function onFrame(event){
+	
+		var now = (new Date()).getTime();
+		if (timeState == "running") {
+			//console.log(pendingNotes.length)
+			if (Object.keys(pendingNotes).length == 0 && now > (SilenceDelay+lastNoteTime)) {
+				if (timeline.length > 0){
+					var lastBlock = timeline[timeline.length-1];
+					lastBlock.end = now;
 				}
-				guessMap[solveKey].playedTones.push(problem.toneNumbers);
-				guessMap[solveKey].count++;
-			});
-		}
-		return guessMap;
-	}
-
-	function dataFromGuessMap(guessMap){
-		var data = [];
-		data.push(['ID','Played','Guessed','','Count']);
-
-
-		for (var intervalGuessName in guessMap){
-			var intervalGuess = guessMap[intervalGuessName];
-			data.push([intervalGuessName,intervalGuess.played.interval,intervalGuess.guessed.interval,intervalGuess.setId,intervalGuess.count]);
-		}
-		
-		return data;
-	}
-
-	function getAxesFromGuessMap(guessMap){
-
-		var hTicksMap = {},vTicksMap = {};
-
-		for (var intervalGuessName in guessMap){
-			var intervalGuess = guessMap[intervalGuessName];
-			var guessLabel = getShortName(intervalGuess.guessed);
-			var playedLabel = getShortName(intervalGuess.played);
-			hTicksMap[playedLabel] = {v:intervalGuess.played.interval,f:playedLabel};
-			vTicksMap[guessLabel] = {v:intervalGuess.guessed.interval,f:guessLabel};			
-		}
-
-		function extractArray(tickMap){
-			var ticks = [];
-
-			for (var tick in tickMap){
-				ticks.push(tickMap[tick]);
+				timeline.push({start:now,pixelsPerSecond:0});
+				timeState = "paused";
+				// console.log("Paused at " + now);
 			}
-
-			return ticks.sort(function(a,b){ return a.v - b.v});
-		};
-
-		return {hTicks:extractArray(hTicksMap),vTicks:extractArray(vTicksMap)};
-	}
-
-	function drawIntervalToneChart(intervalGuesses)
-	{
-		var chart = new google.visualization.ColumnChart(document.getElementById('toneChartDiv'));
-
-		var dataArray = [['Root','Count']];
-		var toneCounts = {};
-		var toneTicks = [];
-		
-		intervalGuesses.forEach(function(intervalGuess){
-
-		intervalGuess.playedTones.forEach(function(tones){
-				if (toneCounts[tones[0]] == null){
-					toneCounts[tones[0]] = 0;
-				}
-				toneCounts[tones[0]]++;
-			});
-
-		});
-
-		for (var tone in toneCounts){
-			dataArray.push([1*tone,toneCounts[tone]]);
-			toneTicks.push({v:1*tone,f:noteFromToneNumber(tone)});
+		} else if (timeState == "paused") {
+			if (Object.keys(pendingNotes).length > 0 || now < (SilenceDelay+lastNoteTime)) {
+				timeline[timeline.length-1].end = lastNoteTime;
+				timeline.push({start:lastNoteTime,pixelsPerSecond:PlayingPixelsPerSecond});
+				timeState = "running";
+				// console.log("Resumed at " + lastNoteTime);
+			}
 		}
+		//else 
+			//console.log("Unexpected state " + timeState);
 
-		toneTicks.sort(function(a,b){ return a.v - b.v});
+		
+   		for (var i = 0;i < noteList.length; i++)
+   		{
+   			midiEvent = noteList[i];
+   			midiEvent.draw(now);
 
-		var data = google.visualization.arrayToDataTable(dataArray);
+   			if (midiEvent.canDelete){
+   				midiEvent.delete();
+				noteList.splice(i,1);
+				i--;
+   			}
+   		}
 
-		var options = {
-			hAxis: {title: 'Played',ticks:toneTicks},//,viewWindow:{max:toneTicks[toneTicks.length-1].v+1,min:toneTicks[0].v-1}},
-			vAxis: {title: 'Count'},
-			width:500,
-			height:500,
-			chartArea:{left:50,top:30,width:'80%',height:'80%'}			
-		}; 
-
-      	chart.draw(data, options);
+   		for (var patternKey in patternMatches){
+			var patternMatch = patternMatches[patternKey];
+			patternMatch.draw();
+			if (patternMatch.canDelete){
+				patternMatch.delete();
+				delete patternMatches[patternKey];
+			}
+		}   		
 	}
 
-	function drawSeriesChart(testList) 
-	{
-		var chart = new google.visualization.BubbleChart(document.getElementById('series_chart_div'));
+</script>
+<body>
+	<canvas id="myCanvas"  resize="true"  width="2000" height="1200"></canvas>
+</body>
 
-		var guessMap = makeGuessMap(testList);
-		var data = google.visualization.arrayToDataTable(dataFromGuessMap(guessMap));
-
-		var intervalTicks = getAxesFromGuessMap(guessMap);
-
-		var options = {
-			hAxis: {title: 'Played',ticks:intervalTicks.hTicks,viewWindow:{max:13,min:1}},
-			vAxis: {title: 'Guessed',ticks:intervalTicks.vTicks,viewWindow:{max:13,min:1}},
-			width:500,
-			height:500,
-			// chartArea: {width: '90%', height: '90%'},
-			 chartArea:{left:50,top:30,width:'80%',height:'80%'},
-			bubble: {textStyle: {fontSize: 11}},
-			sizeAxis:{minValue: 1,  maxSize: 10},
-			colorAxis:{legend:{position:"none"},colors:['red','orange']},
-			bubble:{textStyle:{opacity:0}},
-			selectionMode:'single',
-			tooltip:{isHtml:true}
-		};
-
-      	google.visualization.events.addListener(chart, 'select', function(){
-      		var selection = chart.getSelection();
-      		var bubbles = [];
-      		selection.forEach(function(selected){
-	      		var bubbleId = data.getValue(selected.row,0);
-	      		bubbles.push(guessMap[bubbleId]);
-	      	});
-	      	drawIntervalToneChart(bubbles);
-      	});
-
-      	chart.draw(data, options);
-  	}
-
-    </script>
 </html>
-
-
-
-
-
-
-
-
-
-
-
