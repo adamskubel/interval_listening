@@ -118,10 +118,10 @@
 				<div class="config">
 					<label for="setSelect">Test Set</label>
 					<select id="setSelect" class="config">
-						<option value="Simple" selected="true">Simple</option>
+						<option value="Simple" >Simple</option>
 						<option value="Perfect" >Perfect</option>
 						<option value="Easy" >Easy</option>
-						<option value="Major">Major</option>
+						<option value="Major" selected="true">Major</option>
 						<option value="All">All</option>
 					</select>
 				</div>
@@ -419,8 +419,6 @@
 	{
 		if (problem.guesses.length == 0)
 			return getReplayWeight(problem);
-		if (problem.guesses.length == 1)
-			return 0.25;
 		return 0;
 	}
 
@@ -594,10 +592,13 @@
 
 	function finishCurrentTest()
 	{
-		console.log(JSON.stringify(currentTest));
-		resultList.push(currentTest);
-		updateResultList();
-		showMessage("Test completed. Start a new test when ready!");
+		if (currentTest){
+			console.log(JSON.stringify(currentTest));
+			resultList.push(currentTest);
+			updateResultList();
+			showMessage("Test completed. Start a new test when ready!");
+			currentTest = null;
+		}
 	}
 
 	function intervalGuess(guessedInterval)
@@ -688,7 +689,11 @@
 
 			text.innerHTML = renderResult(result,true);
 		}
-		drawSeriesChart();
+		updateChart(2);
+	}
+
+	function updateChart(chartDepth){
+		drawSeriesChart(resultList.asArray().slice(Math.max(0,resultList.length-chartDepth),resultList.length));
 	}
 
 	WebMidi.enable(function(err){
@@ -963,7 +968,12 @@
 	function loadCharts()
 	{
 		google.charts.load('current', {'packages':['corechart','bar']});
-		google.charts.setOnLoadCallback(drawSeriesChart);
+		google.charts.setOnLoadCallback(function(){
+			if (resultList){
+				console.log("CHART LOADED LAST");
+				updateResultList();
+			}
+		});
 	}
 
 	function makeGuessMap(resultList){
@@ -971,7 +981,7 @@
 		var guessMap = {};
 
 		for (var i=0;i<resultList.length;i++){
-			var testRecord = resultList.get(i);
+			var testRecord = resultList[i];
 
 			testRecord.problems.forEach(function(problem){
 
@@ -1010,12 +1020,12 @@
 
 	function dataFromGuessMap(guessMap){
 		var data = [];
-		data.push(['ID','Guessed','Played','','Count']);
+		data.push(['ID','Played','Guessed','','Count']);
 
 
 		for (var intervalGuessName in guessMap){
 			var intervalGuess = guessMap[intervalGuessName];
-			data.push([intervalGuessName,intervalGuess.guessed.interval,intervalGuess.played.interval,intervalGuess.setId,intervalGuess.count]);
+			data.push([intervalGuessName,intervalGuess.played.interval,intervalGuess.guessed.interval,intervalGuess.setId,intervalGuess.count]);
 		}
 		
 		return data;
@@ -1055,7 +1065,7 @@
 		var toneTicks = [];
 		
 		intervalGuesses.forEach(function(intervalGuess){
-			
+
 		intervalGuess.playedTones.forEach(function(tones){
 				if (toneCounts[tones[0]] == null){
 					toneCounts[tones[0]] = 0;
@@ -1063,12 +1073,12 @@
 				toneCounts[tones[0]]++;
 			});
 
-			for (var tone in toneCounts){
-				dataArray.push([1*tone,toneCounts[tone]]);
-				toneTicks.push({v:1*tone,f:noteFromToneNumber(tone)});
-			}
 		});
 
+		for (var tone in toneCounts){
+			dataArray.push([1*tone,toneCounts[tone]]);
+			toneTicks.push({v:1*tone,f:noteFromToneNumber(tone)});
+		}
 
 		toneTicks.sort(function(a,b){ return a.v - b.v});
 
@@ -1085,17 +1095,11 @@
       	chart.draw(data, options);
 	}
 
-	function drawSeriesChart() 
+	function drawSeriesChart(testList) 
 	{
-		if (!resultList) {
-			console.log("No result list :(");
-			return;
-		}
+		var chart = new google.visualization.BubbleChart(document.getElementById('series_chart_div'));
 
-
-      	var chart = new google.visualization.BubbleChart(document.getElementById('series_chart_div'));
-
-		var guessMap = makeGuessMap(resultList);
+		var guessMap = makeGuessMap(testList);
 		var data = google.visualization.arrayToDataTable(dataFromGuessMap(guessMap));
 
 		var intervalTicks = getAxesFromGuessMap(guessMap);
@@ -1110,7 +1114,9 @@
 			bubble: {textStyle: {fontSize: 11}},
 			sizeAxis:{minValue: 1,  maxSize: 10},
 			colorAxis:{legend:{position:"none"},colors:['red','orange']},
-			bubble:{textStyle:{opacity:0}}
+			bubble:{textStyle:{opacity:0}},
+			selectionMode:'single',
+			tooltip:{isHtml:true}
 		};
 
       	google.visualization.events.addListener(chart, 'select', function(){
